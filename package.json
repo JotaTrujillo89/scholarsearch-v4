@@ -1,0 +1,24 @@
+{
+  "name": "scholarsearch-server",
+  "version": "1.0.0",
+  "description": "Servidor HTTP simple para ScholarsSearch - Solución definitiva para problemas CORS",
+  "main": "servidor.js",
+  "scripts": {
+    "start": "node servidor.js",
+    "dev": "node servidor.js"
+  },
+  "keywords": [
+    "scholarsearch",
+    "directus",
+    "cors",
+    "servidor",
+    "http"
+  ],
+  "author": "ScholarsSearch Team",
+  "license": "MIT",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

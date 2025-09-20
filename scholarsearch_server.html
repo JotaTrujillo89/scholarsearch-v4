@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScholarsSearch V4</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            color: white;
+            padding: 30px 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+        }
+
+        /* GRID LAYOUT PRINCIPAL - 3 COLUMNAS EXACTAS */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            align-items: start;
+        }
+
+        /* PANEL IZQUIERDO - FILTROS CON SCROLL */
+        .filters-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            position: sticky;
+            top: 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .filters-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .filter-group input[type="text"],
+        .filter-group input[type="number"],
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        /* CHECKBOXES MÚLTIPLES */
+        .checkbox-group {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 10px;
+            background: white;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+
+        .budget-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .budget-container input {
+            flex: 2;
+        }
+
+        .budget-container select {
+            flex: 1;
+        }
+
+        /* PANEL CENTRAL - PESTAÑAS Y RESULTADOS */
+        .results-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            min-height: 600px;
+        }
+
+        /* SISTEMA DE PESTAÑAS */
+        .tabs-container {
+            display: flex;
+            border-bottom: 1px solid #e0e0e0;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 10px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .tab-button:not(.active) {
+            background: #f8f9fa;
+            color: #666;
+        }
+
+        .tab-button:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        /* CONTENIDO DE PESTAÑAS */
+        .tab-content {
+            padding: 25px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* TARJETAS DE PROGRAMAS */
+        .program-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .program-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .program-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .university-name {
+            font-size: 1rem;
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .favorite-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #ddd;
+            transition: all 0.3s ease;
+        }
+
+        .favorite-btn.active {
+            color: #ff6b6b;
+        }
+
+        .program-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 2px;
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .scholarships-toggle {
+            width: 100%;
+            padding: 10px;
+            background: #f8f9ff;
+            border: 1px solid #667eea;
+            border-radius: 8px;
+            color: #667eea;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .scholarships-toggle:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* DESPLEGABLE DE BECAS DENTRO DE TARJETA */
+        .scholarships-dropdown {
+            display: none;
+            margin-top: 15px;
+            border-top: 1px solid #e0e0e0;
+            padding-top: 15px;
+        }
+
+        .scholarships-dropdown.active {
+            display: block;
+        }
+
+        .scholarship-item {
+            background: #f8f9ff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .scholarship-item:hover {
+            background: #eef1ff;
+            border-color: #667eea;
+        }
+
+        .scholarship-item.selected {
+            background: #667eea;
+            color: white;
+            border-color: #5a6fd8;
+        }
+
+        .scholarship-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .scholarship-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .scholarship-favorite {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #ddd;
+        }
+
+        .scholarship-favorite.active {
+            color: #ffd700;
+        }
+
+        .scholarship-details {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        /* PAGINACIÓN */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .pagination-btn {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            background: #667eea;
+            color: white;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        /* PANEL DERECHO - CALCULADORA CON SCROLL */
+        .calculator-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            position: sticky;
+            top: 20px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .calculator-panel h3 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .calculator-content {
+            display: none;
+        }
+
+        .calculator-content.active {
+            display: block;
+        }
+
+        .cost-breakdown {
+            background: #f8f9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .cost-item.total {
+            font-weight: 700;
+            font-size: 1.1rem;
+            border-top: 1px solid #ddd;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        .budget-comparison {
+            background: #f0f9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .budget-comparison.affordable {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .budget-comparison.expensive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* SCROLLBARS PERSONALIZADAS */
+        .filters-panel::-webkit-scrollbar,
+        .calculator-panel::-webkit-scrollbar,
+        .checkbox-group::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .filters-panel::-webkit-scrollbar-track,
+        .calculator-panel::-webkit-scrollbar-track,
+        .checkbox-group::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .filters-panel::-webkit-scrollbar-thumb,
+        .calculator-panel::-webkit-scrollbar-thumb,
+        .checkbox-group::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .filters-panel::-webkit-scrollbar-thumb:hover,
+        .calculator-panel::-webkit-scrollbar-thumb:hover,
+        .checkbox-group::-webkit-scrollbar-thumb:hover {
+            background: #5a6fd8;
+        }
+
+        /* LOADING Y ERROR STATES */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #d32f2f;
+            background: #ffebee;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 1024px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .filters-panel, .calculator-panel {
+                position: relative;
+                top: auto;
+                max-height: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER -->
+    <div class="header">
+        <h1>🎓 ScholarsSearch</h1>
+        <p>Calculadora Inteligente de Becas Universitarias</p>
+    </div>
+
+    <!-- CONTENEDOR PRINCIPAL CON GRID 3 COLUMNAS -->
+    <div class="main-container">
+
+        <!-- PANEL IZQUIERDO - FILTROS CON SCROLL -->
+        <div class="filters-panel">
+            <h3>Filtros de Búsqueda</h3>
+
+            <!-- 1. BÚSQUEDA DE PROGRAMA -->
+            <div class="filter-group">
+                <label for="programSearch">Búsqueda de Programa:</label>
+                <input type="text" id="programSearch" placeholder="Ej: ingeniería, medicina, business..." 
+                       oninput="applyFilters()">
+            </div>
+
+            <!-- 2. TIPO DE PROGRAMA - CHECKBOXES MÚLTIPLES -->
+            <div class="filter-group">
+                <label>Tipo de Programa:</label>
+                <div class="checkbox-group" id="programTypeFilter">
+                    <!-- Se genera dinámicamente desde Directus -->
+                </div>
+            </div>
+
+            <!-- 3. PAÍSES - CHECKBOXES MÚLTIPLES -->
+            <div class="filter-group">
+                <label>Países:</label>
+                <div class="checkbox-group" id="countryFilter">
+                    <!-- Se genera dinámicamente desde Directus -->
+                </div>
+            </div>
+
+            <!-- 4. TIPO DE BECA - CHECKBOXES MÚLTIPLES -->
+            <div class="filter-group">
+                <label>Tipo de Beca:</label>
+                <div class="checkbox-group" id="scholarshipTypeFilter">
+                    <!-- Se genera dinámicamente desde Directus -->
+                </div>
+            </div>
+
+            <!-- 5. PRESUPUESTO FAMILIAR -->
+            <div class="filter-group">
+                <label for="budgetAmount">Presupuesto Familiar:</label>
+                <div class="budget-container">
+                    <input type="number" id="budgetAmount" placeholder="Ingresa tu presupuesto" 
+                           oninput="applyFilters()">
+                    <select id="budgetCurrency" onchange="applyFilters()">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="CAD">CAD</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL CENTRAL - PESTAÑAS Y RESULTADOS -->
+        <div class="results-panel">
+            <!-- SISTEMA DE PESTAÑAS -->
+            <div class="tabs-container">
+                <button class="tab-button active" onclick="showTab('results')">Resultados</button>
+                <button class="tab-button" onclick="showTab('favoritePrograms')" id="favoriteProgramsTab">
+                    Programas Favoritos (<span id="favoriteProgramsCount">0</span>/20)
+                </button>
+                <button class="tab-button" onclick="showTab('favoriteScholarships')" id="favoriteScholarshipsTab">
+                    Becas Favoritas (<span id="favoriteScholarshipsCount">0</span>/20)
+                </button>
+            </div>
+
+            <!-- CONTENIDO PESTAÑA RESULTADOS -->
+            <div id="results" class="tab-content active">
+                <div id="resultsContainer">
+                    <div class="loading">Iniciando ScholarsSearch V4...</div>
+                </div>
+
+                <!-- PAGINACIÓN DE 25 RESULTADOS -->
+                <div class="pagination-container" id="paginationContainer" style="display: none;">
+                    <button class="pagination-btn" id="prevBtn" onclick="changePage(-1)">&laquo; Anterior</button>
+                    <div id="pageNumbers"></div>
+                    <button class="pagination-btn" id="nextBtn" onclick="changePage(1)">Siguiente &raquo;</button>
+                </div>
+            </div>
+
+            <!-- CONTENIDO PESTAÑA PROGRAMAS FAVORITOS -->
+            <div id="favoritePrograms" class="tab-content">
+                <div id="favoriteProgramsContainer">
+                    <div class="loading">No tienes programas favoritos aún</div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="pagination-btn" onclick="exportFavoritePrograms()" style="background: #667eea; color: white;">
+                        Descargar PDF de Favoritos
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENIDO PESTAÑA BECAS FAVORITAS -->
+            <div id="favoriteScholarships" class="tab-content">
+                <div id="favoriteScholarshipsContainer">
+                    <div class="loading">No tienes becas favoritas aún</div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="pagination-btn" onclick="exportFavoriteScholarships()" style="background: #667eea; color: white;">
+                        Descargar PDF de Favoritos
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- PANEL DERECHO - CALCULADORA CON SCROLL -->
+        <div class="calculator-panel">
+            <h3>Calculadora de Costos</h3>
+
+            <div class="loading">Selecciona una beca para ver el cálculo</div>
+
+            <!-- CONTENIDO DE LA CALCULADORA (SE ACTIVA AL SELECCIONAR BECA) -->
+            <div class="calculator-content" id="calculatorContent">
+                <div class="cost-breakdown">
+                    <h4 id="selectedProgram">Programa Seleccionado</h4>
+                    <h5 id="selectedScholarship">Beca Seleccionada</h5>
+
+                    <div class="cost-item">
+                        <span>Costo anual base:</span>
+                        <span id="baseCost">$0</span>
+                    </div>
+
+                    <div class="cost-item">
+                        <span>Descuento de beca:</span>
+                        <span id="scholarshipDiscount">$0</span>
+                    </div>
+
+                    <div class="cost-item total">
+                        <span>COSTO REAL ANUAL:</span>
+                        <span id="finalCost">$0</span>
+                    </div>
+                </div>
+
+                <div class="budget-comparison" id="budgetComparison">
+                    <h4>Comparación con Presupuesto</h4>
+                    <div id="budgetAnalysis">Configura tu presupuesto familiar</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // VARIABLES GLOBALES
+        let allPrograms = [], filteredPrograms = [], allScholarships = [];
+        let favoritePrograms = JSON.parse(localStorage.getItem('favoritePrograms') || '[]');
+        let favoriteScholarships = JSON.parse(localStorage.getItem('favoriteScholarships') || '[]');
+        let currentPage = 1, itemsPerPage = 25;
+        let selectedProgram = null, selectedScholarship = null;
+        const exchangeRates = { USD: 1, EUR: 0.85, GBP: 0.73, CAD: 1.35 };
+
+// Sistema de tracking simple
+function getUserId() {
+    let userId = localStorage.getItem('scholarsearch_user_id');
+    if (!userId) {
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('scholarsearch_user_id', userId);
+    }
+    return userId;
+}
+
+async function trackActivity(action, data = {}) {
+    console.log(`Tracking: ${action}`, data);
+    
+    try {
+        const activityData = {
+            user_id: getUserId(),
+            action_type: action,
+            timestamp: new Date().toISOString(),
+            session_data: JSON.stringify(data),
+            program_id: data.program_id || data.scholarship_id || null
+        };
+
+        const response = await fetch('http://localhost:8055/items/activity_log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(activityData)
+        });
+
+        if (response.ok) {
+            console.log('✅ Guardado en Directus');
+
+// Enviar notificación a universidad si es favorito
+            await sendUniversityNotification(action, data);
+
+
+        } else {
+            console.log('⚠️ Error Directus:', response.statusText);
+        }
+    } catch (error) {
+        console.log('⚠️ Error conexión:', error.message);
+    }
+}
+
+
+async function sendUniversityNotification(action, data) {
+    try {
+        // Solo enviar para acciones de favoritos (no desfavoritos)
+        if (!action.includes('favorited')) return;
+        
+        const emailData = {
+            university_name: data.university || 'Universidad no especificada',
+            student_id: getUserId(),
+            action_type: action,
+            program_details: data,
+            timestamp: new Date().toISOString(),
+            notification_sent: false
+        };
+
+        const response = await fetch('http://localhost:8055/items/email_notifications', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(emailData)
+        });
+
+        if (response.ok) {
+            console.log('📧 Notificación de email registrada');
+        } else {
+            console.log('⚠️ Error registrando notificación:', response.statusText);
+        }
+    } catch (error) {
+        console.log('⚠️ Error notificación email:', error.message);
+    }
+}
+
+function trackExternalClick(programId, url, universityName) {
+    const clickData = {
+        program_id: programId,
+        university: universityName,
+        external_url: url,
+        click_timestamp: new Date().toISOString()
+    };
+    
+    trackActivity('external_link_clicked', clickData);
+    window.open(url, '_blank');
+}
+
+        // INICIALIZACIÓN
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUniversities(); loadScholarships(); updateFavoriteCounters();
+        });
+
+        // CARGAR DATOS DESDE DIRECTUS
+        async function loadUniversities() {
+            try {
+                const response = await fetch('http://localhost:8055/items/universidades?limit=-1');
+                const data = await response.json();
+                allPrograms = data.data || data;
+                console.log(`Universidades cargadas: ${allPrograms.length}`);
+                populateFilters(); applyFilters();
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('resultsContainer').innerHTML = 
+                    '<div class="error">Error de conexión. Verifica Directus en localhost:8055<br><button class="pagination-btn" onclick="loadUniversities()">Reintentar</button></div>';
+            }
+        }
+
+        async function loadScholarships() {
+            try {
+                const response = await fetch('http://localhost:8055/items/becas?limit=-1');
+                const data = await response.json();
+                allScholarships = data.data || data;
+                console.log(`Becas cargadas: ${allScholarships.length}`);
+                populateScholarshipTypeFilter();
+            } catch (error) { console.error('Error becas:', error); }
+        }
+
+        // GENERAR FILTROS DINÁMICOS
+        function populateFilters() {
+            const types = [...new Set(allPrograms.map(p => p.tipo).filter(t => t))].sort();
+            const countries = [...new Set(allPrograms.map(p => p.pais).filter(c => c))].sort();
+
+            ['programTypeFilter', 'countryFilter'].forEach((id, idx) => {
+                const container = document.getElementById(id);
+                const items = idx === 0 ? types : countries;
+                container.innerHTML = '';
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'checkbox-item';
+                    div.innerHTML = `<input type="checkbox" id="${id}_${item}" value="${item}" onchange="applyFilters()"><label for="${id}_${item}">${item}</label>`;
+                    container.appendChild(div);
+                });
+            });
+        }
+
+        function populateScholarshipTypeFilter() {
+            const types = [...new Set(allScholarships.map(s => s.Tipo_de_beca).filter(t => t))].sort();
+            const container = document.getElementById('scholarshipTypeFilter');
+            container.innerHTML = '';
+            types.forEach(type => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `<input type="checkbox" id="schol_${type}" value="${type}" onchange="applyFilters()"><label for="schol_${type}">${type}</label>`;
+                container.appendChild(div);
+            });
+        }
+
+        // APLICAR FILTROS
+        function applyFilters() {
+            const searchTerm = document.getElementById('programSearch').value.toLowerCase();
+            const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
+            const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
+            const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
+            const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
+            const budgetCurrency = document.getElementById('budgetCurrency').value;
+            const budgetInUSD = budgetAmount / exchangeRates[budgetCurrency];
+
+            filteredPrograms = allPrograms.filter(program => {
+                const matchesSearch = !searchTerm || 
+                    (program.programa && program.programa.toLowerCase().includes(searchTerm)) ||
+                    (program.nombre_programa && program.nombre_programa.toLowerCase().includes(searchTerm)) ||
+                    (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
+                const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
+                const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
+
+                let matchesBudget = true;
+                if (budgetAmount > 0) {
+                    const bestCost = calculateBestCost(program);
+                    matchesBudget = bestCost <= budgetInUSD;
+                }
+
+                let matchesScholarshipType = true;
+                if (selectedScholarshipTypes.length > 0) {
+                    const programScholarships = getScholarshipsForUniversity(program.universidad);
+                    matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
+                }
+
+                return matchesSearch && matchesType && matchesCountry && matchesBudget && matchesScholarshipType;
+            });
+
+            currentPage = 1;
+            displayPrograms();
+            updatePagination();
+        }
+
+        // MOSTRAR PROGRAMAS
+        function displayPrograms() {
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const programsToShow = filteredPrograms.slice(start, end);
+            const container = document.getElementById('resultsContainer');
+
+            if (programsToShow.length === 0) {
+                container.innerHTML = '<div class="error">No se encontraron programas</div>';
+                document.getElementById('paginationContainer').style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            programsToShow.forEach(program => {
+                const isFavorite = favoritePrograms.includes(program.id);
+                const scholarships = getScholarshipsForUniversity(program.universidad);
+
+                html += `
+                    <div class="program-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="program-title">
+    ${program.enlace ? 
+        `<a href="#" onclick="trackExternalClick(${program.id}, '${program.enlace}', '${program.universidad}'); return false;" style="color: #667eea; text-decoration: underline; cursor: pointer;">
+            ${program.programa || program.nombre_programa || 'Programa no especificado'}
+        </a>` 
+        : 
+        `${program.programa || program.nombre_programa || 'Programa no especificado'}`
+    }
+</div>
+                                <div class="university-name">${program.universidad || 'Universidad no especificada'}</div>
+                            </div>
+                            <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleProgramFavorite(${program.id})">
+                                ${isFavorite ? '❤️' : '🤍'}
+                            </button>
+                        </div>
+
+                        <div class="program-details">
+                            <div class="detail-item"><span class="detail-label">Tipo</span><span class="detail-value">${program.tipo || 'No especificado'}</span></div>
+                            <div class="detail-item"><span class="detail-label">País</span><span class="detail-value">${program.pais || 'No especificado'}</span></div>
+                            <div class="detail-item"><span class="detail-label">Duración</span><span class="detail-value">${formatDuration(program)}</span></div>
+                            <div class="detail-item"><span class="detail-label">Precio Base</span><span class="detail-value">$${formatCurrency(program.precio_max_anual)}</span></div>
+                        </div>
+
+                        <div class="detail-item" style="margin-bottom: 15px;">
+                            <span class="detail-label">🎁 Becas disponibles: ${scholarships.length} opciones</span>
+                        </div>
+
+                        <button class="scholarships-toggle" onclick="toggleScholarships('${program.id}')">Ver becas ▼</button>
+
+                        <div class="scholarships-dropdown" id="scholarships_${program.id}">
+                            ${generateScholarshipsHTML(program, scholarships)}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            document.getElementById('paginationContainer').style.display = filteredPrograms.length > itemsPerPage ? 'flex' : 'none';
+        }
+
+        // GENERAR HTML DE BECAS
+        function generateScholarshipsHTML(program, scholarships) {
+            if (scholarships.length === 0) return '<div class="loading">No hay becas disponibles</div>';
+
+            let html = '';
+            scholarships.forEach(scholarship => {
+                const isFavorite = favoriteScholarships.includes(scholarship.id);
+                const finalCost = calculateFinalCost(program.precio_max_anual, scholarship);
+                const discountText = getDiscountText(scholarship);
+
+                html += `
+                    <div class="scholarship-item" onclick="selectScholarship(${program.id}, ${scholarship.id})">
+                        <div class="scholarship-header">
+                            <span class="scholarship-name">${scholarship.Nombre_Beca || 'Beca sin nombre'}</span>
+                            <button class="scholarship-favorite ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleScholarshipFavorite(${scholarship.id})">
+                                ${isFavorite ? '⭐' : '☆'}
+                            </button>
+                        </div>
+                        <div class="scholarship-details">
+                            Tipo: ${scholarship.Tipo_de_beca || 'No especificado'}<br>
+                            Descuento: ${discountText}<br>
+                            <strong>Costo final: $${formatCurrency(finalCost)}</strong>
+                        </div>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        // FUNCIONES DE CÁLCULO
+        function getScholarshipsForUniversity(universityName) {
+            if (!universityName || !allScholarships) return [];
+            return allScholarships.filter(s => s.Universidad && s.Universidad.toLowerCase() === universityName.toLowerCase());
+        }
+
+        function calculateBestCost(program) {
+            const baseCost = parseFloat(program.precio_max_anual) || 0;
+            const scholarships = getScholarshipsForUniversity(program.universidad);
+            if (scholarships.length === 0) return baseCost;
+
+            let bestCost = baseCost;
+            scholarships.forEach(s => {
+                const cost = calculateFinalCost(baseCost, s);
+                if (cost < bestCost) bestCost = cost;
+            });
+            return bestCost;
+        }
+
+        function calculateFinalCost(baseCost, scholarship) {
+            let finalCost = parseFloat(baseCost) || 0;
+            const percentage = parseFloat(scholarship.Porcentaje_hasta) || parseFloat(scholarship.Porcentaje_desde);
+            const amount = parseFloat(scholarship.Monto_hasta) || parseFloat(scholarship.Monto_desde);
+
+            if (percentage && percentage > 0) {
+                const rate = percentage > 1 ? percentage / 100 : percentage;
+                finalCost = finalCost * (1 - rate);
+            }
+            if (amount && amount > 0) {
+                finalCost = Math.max(0, finalCost - amount);
+            }
+            return Math.max(0, finalCost);
+        }
+
+        function getDiscountText(scholarship) {
+            const percentage = parseFloat(scholarship.Porcentaje_hasta) || parseFloat(scholarship.Porcentaje_desde);
+            const amount = parseFloat(scholarship.Monto_hasta) || parseFloat(scholarship.Monto_desde);
+
+            if (percentage && percentage > 0) {
+                const display = percentage > 1 ? percentage : percentage * 100;
+                return `${display}% de descuento`;
+            } else if (amount && amount > 0) {
+                return `$${formatCurrency(amount)} USD`;
+            }
+            return 'Beneficio variable';
+        }
+
+        // INTERACCIÓN DE USUARIO
+        function toggleScholarships(programId) {
+            const dropdown = document.getElementById(`scholarships_${programId}`);
+            const button = dropdown.previousElementSibling;
+
+            if (dropdown.classList.contains('active')) {
+                dropdown.classList.remove('active');
+                button.innerHTML = 'Ver becas ▼';
+            } else {
+                dropdown.classList.add('active');
+                button.innerHTML = 'Ocultar becas ▲';
+            }
+        }
+
+        function selectScholarship(programId, scholarshipId) {
+            document.querySelectorAll('.scholarship-item.selected').forEach(item => item.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+
+            selectedProgram = allPrograms.find(p => p.id === programId);
+            selectedScholarship = allScholarships.find(s => s.id === scholarshipId);
+            updateCalculator();
+        }
+
+        function updateCalculator() {
+            if (!selectedProgram || !selectedScholarship) return;
+
+            const baseCost = parseFloat(selectedProgram.precio_max_anual) || 0;
+            const finalCost = calculateFinalCost(baseCost, selectedScholarship);
+            const discount = baseCost - finalCost;
+
+            document.getElementById('selectedProgram').textContent = 
+                `${selectedProgram.programa || selectedProgram.nombre_programa} - ${selectedProgram.universidad}`;
+            document.getElementById('selectedScholarship').textContent = selectedScholarship.Nombre_Beca;
+            document.getElementById('baseCost').textContent = `$${formatCurrency(baseCost)}`;
+            document.getElementById('scholarshipDiscount').textContent = `$${formatCurrency(discount)}`;
+            document.getElementById('finalCost').textContent = `$${formatCurrency(finalCost)}`;
+
+            document.querySelector('.calculator-panel .loading').style.display = 'none';
+            document.getElementById('calculatorContent').classList.add('active');
+            updateBudgetComparison(finalCost);
+        }
+
+        function updateBudgetComparison(finalCost) {
+            const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
+            const budgetCurrency = document.getElementById('budgetCurrency').value;
+            const budgetInUSD = budgetAmount / exchangeRates[budgetCurrency];
+
+            const comparison = document.getElementById('budgetComparison');
+            const analysis = document.getElementById('budgetAnalysis');
+
+            if (budgetAmount === 0) {
+                analysis.innerHTML = 'Configura tu presupuesto familiar';
+                comparison.className = 'budget-comparison';
+                return;
+            }
+
+            const difference = budgetInUSD - finalCost;
+            const percentage = (finalCost / budgetInUSD) * 100;
+
+            if (difference >= 0) {
+                comparison.className = 'budget-comparison affordable';
+                analysis.innerHTML = `<strong>✅ Dentro del presupuesto</strong><br>Ahorro: $${formatCurrency(difference)}<br>Utiliza ${percentage.toFixed(1)}%`;
+            } else {
+                comparison.className = 'budget-comparison expensive';
+                analysis.innerHTML = `<strong>❌ Excede presupuesto</strong><br>Exceso: $${formatCurrency(Math.abs(difference))}<br>Requiere ${percentage.toFixed(1)}%`;
+            }
+        }
+
+        // SISTEMA DE FAVORITOS
+        function toggleProgramFavorite(programId) {
+            const index = favoritePrograms.indexOf(programId);
+            if (index === -1) {
+                if (favoritePrograms.length >= 20) { alert('Máximo 20 programas'); return; }
+                favoritePrograms.push(programId);
+            } else {
+                favoritePrograms.splice(index, 1);
+            }
+            localStorage.setItem('favoritePrograms', JSON.stringify(favoritePrograms));
+
+trackActivity(index === -1 ? 'program_favorited' : 'program_unfavorited', { 
+    program_id: programId, 
+    university: allPrograms.find(p => p.id === programId)?.universidad 
+});
+
+            updateFavoriteCounters();
+            displayPrograms();
+        }
+
+        function toggleScholarshipFavorite(scholarshipId) {
+            const index = favoriteScholarships.indexOf(scholarshipId);
+            if (index === -1) {
+                if (favoriteScholarships.length >= 20) { alert('Máximo 20 becas'); return; }
+                favoriteScholarships.push(scholarshipId);
+            } else {
+                favoriteScholarships.splice(index, 1);
+            }
+            localStorage.setItem('favoriteScholarships', JSON.stringify(favoriteScholarships));
+
+trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited', { 
+    scholarship_id: scholarshipId,
+    scholarship_name: allScholarships.find(s => s.id === scholarshipId)?.Nombre_Beca
+});
+
+            updateFavoriteCounters();
+        }
+
+        function updateFavoriteCounters() {
+            document.getElementById('favoriteProgramsCount').textContent = favoritePrograms.length;
+            document.getElementById('favoriteScholarshipsCount').textContent = favoriteScholarships.length;
+        }
+
+        // PAGINACIÓN
+        function updatePagination() {
+            const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
+            const pageNumbers = document.getElementById('pageNumbers');
+
+            document.getElementById('prevBtn').disabled = currentPage === 1;
+            document.getElementById('nextBtn').disabled = currentPage === totalPages;
+
+            let html = '';
+            const maxVisible = 5;
+            let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+            let end = Math.min(totalPages, start + maxVisible - 1);
+
+            for (let i = start; i <= end; i++) {
+                html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+            }
+            pageNumbers.innerHTML = html;
+        }
+
+        function changePage(direction) {
+            const totalPages = Math.ceil(filteredPrograms.length / itemsPerPage);
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentPage = newPage;
+                displayPrograms();
+                updatePagination();
+            }
+        }
+
+        function goToPage(page) { currentPage = page; displayPrograms(); updatePagination(); }
+
+        // PESTAÑAS
+        function showTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+
+            if (tabName === 'favoritePrograms') displayFavoritePrograms();
+            else if (tabName === 'favoriteScholarships') displayFavoriteScholarships();
+        }
+
+        function displayFavoritePrograms() {
+            const container = document.getElementById('favoriteProgramsContainer');
+            if (favoritePrograms.length === 0) {
+                container.innerHTML = '<div class="loading">No tienes programas favoritos</div>';
+                return;
+            }
+
+            const favorites = allPrograms.filter(p => favoritePrograms.includes(p.id));
+            let html = '';
+            favorites.forEach(program => {
+                const scholarships = getScholarshipsForUniversity(program.universidad);
+                const bestCost = calculateBestCost(program);
+                html += `
+                    <div class="program-card">
+                        <div class="card-header">
+                            <div>
+                               <div class="program-title">
+    ${program.enlace ? 
+        `<a href="#" onclick="trackExternalClick(${program.id}, '${program.enlace}', '${program.universidad}'); return false;" style="color: #667eea; text-decoration: underline; cursor: pointer;">
+            ${program.programa || program.nombre_programa}
+        </a>` 
+        : 
+        `${program.programa || program.nombre_programa}`
+    }
+</div>
+                                <div class="university-name">${program.universidad}</div>
+                            </div>
+                            <button class="favorite-btn active" onclick="toggleProgramFavorite(${program.id})">❤️</button>
+                        </div>
+                        <div class="program-details">
+                            <div class="detail-item"><span class="detail-label">País</span><span class="detail-value">${program.pais}</span></div>
+                            <div class="detail-item"><span class="detail-label">Precio base</span><span class="detail-value">$${formatCurrency(program.precio_max_anual)}</span></div>
+                            <div class="detail-item"><span class="detail-label">Mejor costo</span><span class="detail-value">$${formatCurrency(bestCost)}</span></div>
+                            <div class="detail-item"><span class="detail-label">Becas</span><span class="detail-value">${scholarships.length} opciones</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function displayFavoriteScholarships() {
+            const container = document.getElementById('favoriteScholarshipsContainer');
+            if (favoriteScholarships.length === 0) {
+                container.innerHTML = '<div class="loading">No tienes becas favoritas</div>';
+                return;
+            }
+
+            const favorites = allScholarships.filter(s => favoriteScholarships.includes(s.id));
+            let html = '';
+            favorites.forEach(scholarship => {
+                html += `
+                    <div class="program-card">
+                        <div class="card-header">
+                            <div>
+                                <div class="program-title">${scholarship.Nombre_Beca}</div>
+                                <div class="university-name">${scholarship.Universidad}</div>
+                            </div>
+                            <button class="scholarship-favorite active" onclick="toggleScholarshipFavorite(${scholarship.id})">⭐</button>
+                        </div>
+                        <div class="program-details">
+                            <div class="detail-item"><span class="detail-label">País</span><span class="detail-value">${scholarship.Pais}</span></div>
+                            <div class="detail-item"><span class="detail-label">Tipo</span><span class="detail-value">${scholarship.Tipo_de_beca}</span></div>
+                            <div class="detail-item"><span class="detail-label">Descuento</span><span class="detail-value">${getDiscountText(scholarship)}</span></div>
+                            <div class="detail-item"><span class="detail-label">Cobertura</span><span class="detail-value">${scholarship.Cobertura || 'No especificada'}</span></div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // UTILIDADES
+        function formatCurrency(amount) {
+            if (!amount || isNaN(amount)) return '0';
+            return Number(amount).toLocaleString('en-US');
+        }
+
+        function formatDuration(program) {
+            if (program.duracion_min_anos && program.duracion_max_anos) {
+                return program.duracion_min_anos === program.duracion_max_anos ? 
+                    `${program.duracion_min_anos} años` : `${program.duracion_min_anos}-${program.duracion_max_anos} años`;
+            }
+            return program.duracion_max_anos ? `${program.duracion_max_anos} años` : 'No especificada';
+        }
+
+        // EXPORT PDF
+        function exportFavoritePrograms() {
+            if (favoritePrograms.length === 0) { alert('No hay programas favoritos'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text('Programas Favoritos - ScholarsSearch', 20, 20);
+            doc.setFontSize(10);
+            doc.text(`Generado: ${new Date().toLocaleDateString()}`, 20, 30);
+
+            let y = 45;
+            const favorites = allPrograms.filter(p => favoritePrograms.includes(p.id));
+            favorites.forEach((program, i) => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setFontSize(14);
+                doc.text(`${i + 1}. ${program.programa || program.nombre_programa}`, 20, y); y += 7;
+                doc.setFontSize(10);
+                doc.text(`Universidad: ${program.universidad}`, 25, y); y += 5;
+                doc.text(`País: ${program.pais}`, 25, y); y += 5;
+                doc.text(`Precio: $${formatCurrency(program.precio_max_anual)}`, 25, y); y += 10;
+            });
+            doc.save('programas-favoritos.pdf');
+        }
+
+        function exportFavoriteScholarships() {
+            if (favoriteScholarships.length === 0) { alert('No hay becas favoritas'); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.setFontSize(20);
+            doc.text('Becas Favoritas - ScholarsSearch', 20, 20);
+            doc.setFontSize(10);
+            doc.text(`Generado: ${new Date().toLocaleDateString()}`, 20, 30);
+
+            let y = 45;
+            const favorites = allScholarships.filter(s => favoriteScholarships.includes(s.id));
+            favorites.forEach((scholarship, i) => {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setFontSize(14);
+                doc.text(`${i + 1}. ${scholarship.Nombre_Beca}`, 20, y); y += 7;
+                doc.setFontSize(10);
+                doc.text(`Universidad: ${scholarship.Universidad}`, 25, y); y += 5;
+                doc.text(`Descuento: ${getDiscountText(scholarship)}`, 25, y); y += 10;
+            });
+            doc.save('becas-favoritas.pdf');
+        }
+    </script>
+</body>
+</html>
