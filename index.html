@@ -678,7 +678,7 @@ async function trackActivity(action, data = {}) {
             program_id: data.program_id || data.scholarship_id || null
         };
 
-        const response = await fetch('http://localhost:8055/items/activity_log', {
+        const response = await fetch('https://turntable.proxy.rlwy.net:57121/items/activity_log', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(activityData)
@@ -714,7 +714,7 @@ async function sendUniversityNotification(action, data) {
             notification_sent: false
         };
 
-        const response = await fetch('http://localhost:8055/items/email_notifications', {
+        const response = await fetch('https://turntable.proxy.rlwy.net:57121/items/email_notifications', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(emailData)
@@ -750,7 +750,7 @@ function trackExternalClick(programId, url, universityName) {
         // CARGAR DATOS DESDE DIRECTUS
         async function loadUniversities() {
             try {
-                const response = await fetch('http://localhost:8055/items/universidades?limit=-1');
+                const response = await fetch('https://turntable.proxy.rlwy.net:57121/items/universidades?limit=-1');
                 const data = await response.json();
                 allPrograms = data.data || data;
                 console.log(`Universidades cargadas: ${allPrograms.length}`);
@@ -758,13 +758,13 @@ function trackExternalClick(programId, url, universityName) {
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('resultsContainer').innerHTML = 
-                    '<div class="error">Error de conexión. Verifica Directus en localhost:8055<br><button class="pagination-btn" onclick="loadUniversities()">Reintentar</button></div>';
+                    '<div class="error">Error de conexión. Verifica conexión a Railway<br><button class="pagination-btn" onclick="loadUniversities()">Reintentar</button></div>';
             }
         }
 
         async function loadScholarships() {
             try {
-                const response = await fetch('http://localhost:8055/items/becas?limit=-1');
+                const response = await fetch('https://turntable.proxy.rlwy.net:57121/items/becas?limit=-1');
                 const data = await response.json();
                 allScholarships = data.data || data;
                 console.log(`Becas cargadas: ${allScholarships.length}`);
