@@ -240,3 +240,4 @@ Abre las **Herramientas de desarrollador** (F12) y mira la consola:
 ## 🎉 ¡Disfruta ScholarsSearch sin problemas CORS!
 
 Ahora puedes usar ScholarsSearch con toda su funcionalidad sin preocuparte por restricciones del navegador.
+"Updated deployment test"
