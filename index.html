@@ -187,8 +187,8 @@
         .program-card {
             background: white;
             border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 15px;
+            padding: 14px;
+            margin-bottom: 11px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             border-left: 4px solid #667eea;
             transition: all 0.3s ease;
@@ -236,8 +236,8 @@
         .program-details {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
+            gap: 11px;
+            margin-bottom: 11px;
         }
 
         .detail-item {
@@ -483,6 +483,80 @@
             margin: 20px 0;
         }
 
+           /* PANEL HORIZONTAL SUPERIOR */
+        .top-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin: 0 auto 20px auto;
+            max-width: 1360px;
+            border-radius: 15px;
+            padding: 0 20px;
+        }
+
+        .top-panel-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        .budget-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .budget-section label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .budget-section input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .budget-section input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .results-counter {
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .top-tabs {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .top-tab-btn {
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .top-tab-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
         /* RESPONSIVE */
         @media (max-width: 1024px) {
             .main-container {
@@ -505,6 +579,32 @@
         <p>Calculadora Inteligente de Becas Universitarias</p>
     </div>
 
+     <!-- PANEL HORIZONTAL SUPERIOR -->
+    <div class="top-panel">
+        <div class="top-panel-content">
+            <!-- PRESUPUESTO FAMILIAR -->
+            <div class="budget-section">
+                <label for="topBudgetAmount">Presupuesto Familiar Anual:</label>
+                <input type="number" id="topBudgetAmount" placeholder="Ingresa tu presupuesto en USD" 
+                       oninput="syncBudget(this.value)">
+            </div>
+            
+            <!-- CONTADOR DE RESULTADOS -->
+            <div class="results-counter">
+                <span id="resultsCount">Cargando programas...</span>
+            </div>
+            
+            <!-- PESTAÑAS FAVORITOS -->
+            <div class="top-tabs">
+                <button class="top-tab-btn" onclick="showTab('favoritePrograms')">
+                    💖 Programas (<span id="topFavoriteProgramsCount">0</span>)
+                </button>
+                <button class="top-tab-btn" onclick="showTab('favoriteScholarships')">
+                    ⭐ Becas (<span id="topFavoriteScholarshipsCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
     <!-- CONTENEDOR PRINCIPAL CON GRID 3 COLUMNAS -->
     <div class="main-container">
 
@@ -1278,6 +1378,70 @@ trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited'
             });
             doc.save('becas-favoritas.pdf');
         }
+
+         // =============================================================================
+        // PANEL HORIZONTAL SUPERIOR - INTEGRACIÓN
+        // =============================================================================
+
+        // 1. SINCRONIZACIÓN DE PRESUPUESTO ENTRE PANELES
+        function syncBudget(value) {
+            // Sincronizar con el filtro principal
+            document.getElementById('budgetAmount').value = value;
+            // Aplicar filtros automáticamente
+            applyFilters();
+            // Actualizar comparación de presupuesto si hay cálculo activo
+            if (selectedProgram && selectedScholarship) {
+                const finalCost = calculateFinalCost(selectedProgram.precio_max_anual, selectedScholarship);
+                updateBudgetComparison(finalCost);
+            }
+        }
+
+        // 2. ACTUALIZAR CONTADOR DE RESULTADOS EN PANEL SUPERIOR
+        function updateResultsCount() {
+            const count = filteredPrograms.length;
+            const counter = document.getElementById('resultsCount');
+            
+            if (count === 0) {
+                counter.textContent = 'No se encontraron resultados';
+                counter.style.color = '#d32f2f';
+            } else if (count === 1) {
+                counter.textContent = '1 programa encontrado';
+                counter.style.color = '#667eea';
+            } else {
+                counter.textContent = `${count.toLocaleString()} programas encontrados`;
+                counter.style.color = '#667eea';
+            }
+        }
+
+        // 3. ACTUALIZAR CONTADORES DE FAVORITOS EN PANEL SUPERIOR
+        function updateTopFavoriteCounters() {
+            document.getElementById('topFavoriteProgramsCount').textContent = favoritePrograms.length;
+            document.getElementById('topFavoriteScholarshipsCount').textContent = favoriteScholarships.length;
+        }
+
+        // 4. SOBRESCRIBIR FUNCIONES EXISTENTES PARA INTEGRACIÓN
+        // Extender la función displayPrograms existente
+        const originalDisplayPrograms = displayPrograms;
+        displayPrograms = function() {
+            originalDisplayPrograms();
+            updateResultsCount();
+        };
+
+        // Extender la función updateFavoriteCounters existente  
+        const originalUpdateFavoriteCounters = updateFavoriteCounters;
+        updateFavoriteCounters = function() {
+            originalUpdateFavoriteCounters();
+            updateTopFavoriteCounters();
+        };
+
+        // Inicializar contador al cargar
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updateResultsCount, 1000);
+        });
+    </script>
+</body>
+</html>
+        
     </script>
 </body>
 </html>
