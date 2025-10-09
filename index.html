@@ -542,8 +542,16 @@
                     <!-- Se genera dinámicamente desde Directus -->
                 </div>
             </div>
+            <!-- 5. CIUDADES/ESTADOS - CHECKBOXES MÚLTIPLES -->
+            <div class="filter-group">
+                <label>Ciudades/Estados:</label>
+                <div class="checkbox-group" id="cityFilter">
+                    <!-- Se genera dinámicamente desde Directus -->
+                </div>
+            </div>
 
-            <!-- 5. PRESUPUESTO FAMILIAR -->
+
+          <!-- 6. PRESUPUESTO FAMILIAR -->
             <div class="filter-group">
                 <label for="budgetAmount">Presupuesto Familiar:</label>
                 <div class="budget-container">
@@ -773,13 +781,16 @@ function trackExternalClick(programId, url, universityName) {
         }
 
         // GENERAR FILTROS DINÁMICOS
+      
         function populateFilters() {
             const types = [...new Set(allPrograms.map(p => p.tipo).filter(t => t))].sort();
             const countries = [...new Set(allPrograms.map(p => p.pais).filter(c => c))].sort();
+            const cities = [...new Set(allPrograms.map(p => p.estado || p.lugar).filter(c => c))].sort();
 
-            ['programTypeFilter', 'countryFilter'].forEach((id, idx) => {
-                const container = document.getElementById(id);
-                const items = idx === 0 ? types : countries;
+           ['programTypeFilter', 'countryFilter', 'cityFilter'].forEach((id, idx) => {
+    const container = document.getElementById(id);
+    const items = idx === 0 ? types : idx === 1 ? countries : cities;
+
                 container.innerHTML = '';
                 items.forEach(item => {
                     const div = document.createElement('div');
@@ -807,6 +818,7 @@ function trackExternalClick(programId, url, universityName) {
             const searchTerm = document.getElementById('programSearch').value.toLowerCase();
             const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
             const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
+            const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
             const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
             const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
             const budgetCurrency = document.getElementById('budgetCurrency').value;
@@ -819,6 +831,8 @@ function trackExternalClick(programId, url, universityName) {
                     (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
                 const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
                 const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
+                const matchesCity = selectedCities.length === 0 || selectedCities.includes(program.estado) || selectedCities.includes(program.lugar);
+                
 
                 let matchesBudget = true;
                 if (budgetAmount > 0) {
@@ -832,7 +846,7 @@ function trackExternalClick(programId, url, universityName) {
                     matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
                 }
 
-                return matchesSearch && matchesType && matchesCountry && matchesBudget && matchesScholarshipType;
+               return matchesSearch && matchesType && matchesCountry && matchesCity && matchesBudget && matchesScholarshipType;
             });
 
             currentPage = 1;
