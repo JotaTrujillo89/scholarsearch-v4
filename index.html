@@ -37,16 +37,16 @@
             opacity: 0.9;
         }
 
-        /* GRID LAYOUT PRINCIPAL - 3 COLUMNAS EXACTAS */
-        .main-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 20px;
-            display: grid;
-            grid-template-columns: 300px 1fr 350px;
-            gap: 20px;
-            align-items: start;
-        }
+     /* GRID LAYOUT PRINCIPAL - 3 COLUMNAS EXACTAS */
+.main-container {
+    max-width: 1400px;
+    margin: -70px auto 0 auto; /* Subir 70px */
+    padding: 0 20px;
+    display: grid;
+    grid-template-columns: 300px 1fr 350px;
+    gap: 20px;
+    align-items: start;
+}
 
         /* PANEL IZQUIERDO - FILTROS CON SCROLL */
         .filters-panel {
@@ -483,24 +483,25 @@
             margin: 20px 0;
         }
 
-           /* PANEL HORIZONTAL SUPERIOR */
-        .top-panel {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            margin: 0 auto 20px auto;
-            max-width: 1360px;
-            border-radius: 15px;
-            padding: 0 20px;
-        }
+         /* PANEL HORIZONTAL SUPERIOR */
+.top-panel {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 0 auto 20px auto;
+    max-width: 1080px; /* Reducido de 1360px */
+    margin-left: 340px; /* Alineado con panel central */
+    border-radius: 15px;
+    padding: 0 20px;
+}
 
-        .top-panel-content {
-            display: grid;
-            grid-template-columns: 300px 1fr 300px;
-            gap: 20px;
-            align-items: center;
-            padding: 20px 0;
-        }
+.top-panel-content {
+    display: grid;
+    grid-template-columns: 1fr 300px 300px; /* ✅ 3 COLUMNAS */
+    gap: 20px;
+    align-items: center;
+    padding: 20px 0;
+}
 
         .budget-section {
             display: flex;
@@ -660,29 +661,29 @@
 
      <!-- PANEL HORIZONTAL SUPERIOR -->
     <div class="top-panel">
-        <div class="top-panel-content">
-            <!-- PRESUPUESTO FAMILIAR -->
-            <div class="budget-section">
-                <label for="topBudgetAmount">Presupuesto Familiar Anual:</label>
-                <input type="number" id="topBudgetAmount" placeholder="Ingresa tu presupuesto en USD" 
-                       oninput="syncBudget(this.value)">
-            </div>
-            
-            <!-- CONTADOR DE RESULTADOS -->
-            <div class="results-counter">
-                <span id="resultsCount">Cargando programas...</span>
-            </div>
-            
-            <!-- PESTAÑAS FAVORITOS -->
-            <div class="top-tabs">
-                <button class="top-tab-btn" onclick="showTab('favoritePrograms')">
-                    💖 Programas (<span id="topFavoriteProgramsCount">0</span>)
-                </button>
-                <button class="top-tab-btn" onclick="showTab('favoriteScholarships')">
-                    ⭐ Becas (<span id="topFavoriteScholarshipsCount">0</span>)
-                </button>
-            </div>
-        </div>
+<div class="top-panel-content">
+    <!-- CONTADOR DE RESULTADOS (IZQUIERDA) -->
+    <div class="results-counter">
+        <span id="resultsCount">Cargando programas...</span>
+    </div>
+    
+    <!-- PRESUPUESTO FAMILIAR (CENTRO) -->
+    <div class="budget-section">
+        <label for="topBudgetAmount">Presupuesto Familiar Anual:</label>
+        <input type="number" id="topBudgetAmount" placeholder="Ingresa tu presupuesto en USD" 
+               oninput="syncBudget(this.value)">
+    </div>
+    
+    <!-- PESTAÑAS FAVORITOS (DERECHA) -->
+    <div class="top-tabs">
+        <button class="top-tab-btn" onclick="showTab('favoritePrograms')">
+            💖 Programas (<span id="topFavoriteProgramsCount">0</span>)
+        </button>
+        <button class="top-tab-btn" onclick="showTab('favoriteScholarships')">
+            ⭐ Becas (<span id="topFavoriteScholarshipsCount">0</span>)
+        </button>
+    </div>
+</div>
     </div>
     <!-- CONTENEDOR PRINCIPAL CON GRID 3 COLUMNAS -->
     <div class="main-container">
@@ -756,21 +757,7 @@
     </div>
 </div>
 
-          <!-- 7. PRESUPUESTO FAMILIAR -->
-            <div class="filter-group">
-                <label for="budgetAmount">Presupuesto Familiar:</label>
-                <div class="budget-container">
-                    <input type="number" id="budgetAmount" placeholder="Ingresa tu presupuesto" 
-                           oninput="applyFilters()">
-                    <select id="budgetCurrency" onchange="applyFilters()">
-                        <option value="USD">USD</option>
-                        <option value="EUR">EUR</option>
-                        <option value="GBP">GBP</option>
-                        <option value="CAD">CAD</option>
-                    </select>
-                </div>
-            </div>
-        </div>
+               </div>
 
         <!-- PANEL CENTRAL - PESTAÑAS Y RESULTADOS -->
         <div class="results-panel">
@@ -1030,9 +1017,9 @@ function trackExternalClick(programId, url, universityName) {
             const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
             const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
             const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
-            const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
-            const budgetCurrency = document.getElementById('budgetCurrency').value;
-            const budgetInUSD = budgetAmount / exchangeRates[budgetCurrency];
+            const budgetAmount = parseFloat(document.getElementById('topBudgetAmount').value) || 0;
+const budgetCurrency = 'USD';
+const budgetInUSD = budgetAmount; // Ya está en USD
 
             filteredPrograms = allPrograms.filter(program => {
                 const matchesSearch = !searchTerm || 
@@ -1245,10 +1232,10 @@ function trackExternalClick(programId, url, universityName) {
         }
 
         function updateBudgetComparison(finalCost) {
-            const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
-            const budgetCurrency = document.getElementById('budgetCurrency').value;
-            const budgetInUSD = budgetAmount / exchangeRates[budgetCurrency];
-
+            const budgetAmount = parseFloat(document.getElementById('topBudgetAmount').value) || 0;
+const budgetCurrency = 'USD';
+const budgetInUSD = budgetAmount; // Ya está en USD
+            
             const comparison = document.getElementById('budgetComparison');
             const analysis = document.getElementById('budgetAnalysis');
 
@@ -1621,9 +1608,9 @@ applyFilters = function() {
     const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
     const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
     const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
-    const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
-    const budgetCurrency = document.getElementById('budgetCurrency').value;
-    const budgetInUSD = budgetAmount / exchangeRates[budgetCurrency];
+    const budgetAmount = parseFloat(document.getElementById('topBudgetAmount').value) || 0;
+const budgetCurrency = 'USD';
+const budgetInUSD = budgetAmount; // Ya está en USD
     
     // NUEVO: Filtro de tuition range
     const tuitionMin = parseInt(document.getElementById('tuitionMin')?.value || 0);
