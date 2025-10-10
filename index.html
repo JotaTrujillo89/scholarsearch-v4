@@ -1707,10 +1707,9 @@ function updateTuitionRange() {
     
     const fill = document.getElementById('tuitionFill');
     fill.style.left = percentage1 + '%';
-    fill.style.width = (percentage2 - percentage1) + '%';
+   fill.style.width = (percentage2 - percentage1) + '%';
     
-    // Aplicar filtros automáticamente
-    applyFilters();
+    applyFiltersDebounced(); // ✅ USAR DEBOUNCE
 }
 
 
@@ -1781,6 +1780,7 @@ function populateCityFilterComplete() {
 let maxPercentageInData = 100;
 let maxAmountInData = 50000;
 let availableDurations = [];
+let filterDebounceTimer = null; // ✅ AGREGAR ESTA LÍNEA
 
 // Función para inicializar sliders de becas
 function initializeScholarshipSliders() {
@@ -1910,7 +1910,7 @@ function updatePercentageRange() {
     fill.style.left = percentage1 + '%';
     fill.style.width = (percentage2 - percentage1) + '%';
     
-    applyFilters();
+    applyFiltersDebounced();
 }
 
 // Función para actualizar slider de monto
@@ -1942,7 +1942,7 @@ function updateAmountRange() {
     fill.style.left = percentage1 + '%';
     fill.style.width = (percentage2 - percentage1) + '%';
     
-    applyFilters();
+    applyFiltersDebounced();
 }
 
 // Función para limpiar todos los filtros
@@ -1983,7 +1983,13 @@ function clearAllFilters() {
     
     console.log('🗑️ Todos los filtros limpiados');
 }
-        
+  // Función para aplicar filtros con debounce
+function applyFiltersDebounced() {
+    clearTimeout(filterDebounceTimer);
+    filterDebounceTimer = setTimeout(() => {
+        applyFilters();
+    }, 300); // Esperar 300ms después del último movimiento
+}      
     </script>
 </body>
 </html>
