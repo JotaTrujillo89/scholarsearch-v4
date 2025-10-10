@@ -642,13 +642,17 @@
                     <!-- Se genera dinámicamente desde Directus -->
                 </div>
             </div>
-            <!-- 5. CIUDADES/ESTADOS - CHECKBOXES MÚLTIPLES -->
-            <div class="filter-group">
-                <label>Ciudades/Estados:</label>
-                <div class="checkbox-group" id="cityFilter">
-                    <!-- Se genera dinámicamente desde Directus -->
-                </div>
-            </div>
+            <!-- 5. CIUDADES/ESTADOS - CAMPO DE BÚSQUEDA + CHECKBOXES -->
+<div class="filter-group">
+    <label>Ciudades/Estados:</label>
+    <!-- CAMPO DE BÚSQUEDA -->
+    <input type="text" id="citySearch" placeholder="Buscar ciudad... (ej: Flo)" 
+           oninput="filterCityOptions()" style="margin-bottom: 8px;">
+    <!-- CHECKBOXES FILTRADOS -->
+    <div class="checkbox-group" id="cityFilter">
+        <!-- Se genera dinámicamente desde Directus -->
+    </div>
+</div>
 
 
           <!-- 6. PRESUPUESTO FAMILIAR -->
@@ -880,19 +884,25 @@ function trackExternalClick(programId, url, universityName) {
         function populateFilters() {
             const types = [...new Set(allPrograms.map(p => p.tipo).filter(t => t))].sort();
             const countries = [...new Set(allPrograms.map(p => p.pais).filter(c => c))].sort();
-            const cities = [...new Set(allPrograms.map(p => p.estado || p.lugar).filter(c => c))].sort();
+            allCities = [...new Set(allPrograms.map(p => p.estado || p.lugar).filter(c => c))].sort();
 
            ['programTypeFilter', 'countryFilter', 'cityFilter'].forEach((id, idx) => {
     const container = document.getElementById(id);
-    const items = idx === 0 ? types : idx === 1 ? countries : cities;
+    const items = idx === 0 ? types : idx === 1 ? countries : allCities;
 
                 container.innerHTML = '';
-                items.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'checkbox-item';
-                    div.innerHTML = `<input type="checkbox" id="${id}_${item}" value="${item}" onchange="applyFilters()"><label for="${id}_${item}">${item}</label>`;
-                    container.appendChild(div);
-                });
+                if (idx === 2) {
+                    // Para ciudades, usar la función especializada
+                    populateCityFilterComplete();
+                } else {
+                    // Para tipos y países, mantener lógica original
+                    items.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'checkbox-item';
+                        div.innerHTML = `<input type="checkbox" id="${id}_${item}" value="${item}" onchange="applyFilters()"><label for="${id}_${item}">${item}</label>`;
+                        container.appendChild(div);
+                    });
+                }
             });
         }
 
@@ -1433,6 +1443,64 @@ trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited'
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updateResultsCount, 1000);
         });
+
+        // =============================================================================
+// FILTRO DE BÚSQUEDA DE CIUDADES
+// =============================================================================
+
+// Variable global para almacenar todas las ciudades
+let allCities = [];
+
+// Función para filtrar opciones de ciudades mientras se escribe
+function filterCityOptions() {
+    const searchTerm = document.getElementById('citySearch').value.toLowerCase();
+    const container = document.getElementById('cityFilter');
+    
+    // Si no hay término de búsqueda, mostrar todas
+    if (searchTerm === '') {
+        populateCityFilterComplete();
+        return;
+    }
+    
+    // Filtrar ciudades que coincidan con el término
+    const filteredCities = allCities.filter(city => 
+        city.toLowerCase().includes(searchTerm)
+    );
+    
+    // Regenerar checkboxes solo con las ciudades filtradas
+    container.innerHTML = '';
+    filteredCities.forEach(city => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+            <input type="checkbox" id="city_${city}" value="${city}" onchange="applyFilters()">
+            <label for="city_${city}">${city}</label>
+        `;
+        container.appendChild(div);
+    });
+    
+    // Si no hay coincidencias, mostrar mensaje
+    if (filteredCities.length === 0) {
+        container.innerHTML = '<div style="padding: 10px; color: #666; font-style: italic;">No se encontraron ciudades</div>';
+    }
+}
+
+// Función para poblar filtro completo de ciudades (modificar la existente)
+function populateCityFilterComplete() {
+    const container = document.getElementById('cityFilter');
+    container.innerHTML = '';
+    
+    allCities.forEach(city => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        div.innerHTML = `
+            <input type="checkbox" id="city_${city}" value="${city}" onchange="applyFilters()">
+            <label for="city_${city}">${city}</label>
+        `;
+        container.appendChild(div);
+    });
+}
+       
     </script>
 </body>
 </html>
