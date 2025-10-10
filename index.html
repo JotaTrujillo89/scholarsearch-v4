@@ -698,7 +698,7 @@
             <div class="filter-group">
                 <label for="programSearch">Búsqueda de Programa:</label>
                 <input type="text" id="programSearch" placeholder="Ej: ingeniería, medicina, business..." 
-                       oninput="applyFilters()">
+                       oninput="applyFiltersDebounced()">
             </div>
 
             <!-- 2. TIPO DE PROGRAMA - CHECKBOXES MÚLTIPLES -->
@@ -1617,7 +1617,7 @@ const budgetInUSD = budgetAmount; // Ya está en USD
         // 1. SINCRONIZACIÓN DE PRESUPUESTO ENTRE PANELES
         function syncBudget(value) {
     // Aplicar filtros automáticamente
-    applyFilters();
+    applyFiltersDebounced();
     // Actualizar comparación de presupuesto si hay cálculo activo
     if (selectedProgram && selectedScholarship) {
         const finalCost = calculateFinalCost(selectedProgram.precio_max_anual, selectedScholarship);
