@@ -1298,9 +1298,9 @@ trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited'
         }
 
         function updateFavoriteCounters() {
-            document.getElementById('favoriteProgramsCount').textContent = favoritePrograms.length;
-            document.getElementById('favoriteScholarshipsCount').textContent = favoriteScholarships.length;
-        }
+    document.getElementById('topFavoriteProgramsCount').textContent = favoritePrograms.length;
+    document.getElementById('topFavoriteScholarshipsCount').textContent = favoriteScholarships.length;
+}
 
         // PAGINACIÓN
         function updatePagination() {
