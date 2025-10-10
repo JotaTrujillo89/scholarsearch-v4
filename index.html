@@ -310,6 +310,24 @@
             border-color: #5a6fd8;
         }
 
+        /* Animación de flecha para desplegables de becas */
+.toggle-arrow {
+    transition: transform 0.3s ease;
+    display: inline-block;
+    margin-left: 5px;
+}
+
+/* Cuando el details está abierto, rotar la flecha */
+details[open] .toggle-arrow {
+    transform: rotate(180deg);
+}
+
+/* Mejorar el hover del summary */
+details summary:hover {
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 5px;
+}
+
         .scholarship-header {
             display: flex;
             justify-content: space-between;
@@ -333,6 +351,31 @@
         .scholarship-favorite.active {
             color: #ffd700;
         }
+
+        /* SOLUCIÓN: Mantener fondo blanco en desplegable de becas seleccionadas */
+.scholarship-item.selected details div {
+    background: white !important;
+    color: #555 !important;
+    border-radius: 8px;
+    margin-top: 5px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.scholarship-item.selected details div strong {
+    color: #667eea !important;
+}
+
+.scholarship-item.selected details div span {
+    color: #666 !important;
+}
+
+.scholarship-item.selected details summary {
+    color: white !important;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
 
         .scholarship-details {
             font-size: 0.8rem;
@@ -1257,7 +1300,7 @@ function trackExternalClick(programId, url, universityName) {
             
             ${(scholarship.criterios_de_beca || scholarship.requisitos_de_beca || scholarship.elegibilidad_de_beca) ? 
                 `<br><details style="margin-top: 10px;">
-                    <summary style="cursor: pointer; font-weight: 600; color: #667eea; padding: 5px;">📋 Ver Detalles Completos</summary>
+                   <summary style="cursor: pointer; font-weight: 600; color: #667eea; padding: 5px;">📋 Ver Detalles Completos <span class="toggle-arrow">▼</span></summary>
                     <div style="padding: 10px 0; font-size: 0.75rem; color: #555; line-height: 1.4; border-top: 1px solid #eee; margin-top: 5px;">
                         ${scholarship.criterios_de_beca ? 
                             `<div style="margin-bottom: 10px;">
