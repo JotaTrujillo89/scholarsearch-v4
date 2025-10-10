@@ -1260,42 +1260,61 @@ const budgetInUSD = budgetAmount; // Ya está en USD
         }
 
         // SISTEMA DE FAVORITOS
-        function toggleProgramFavorite(programId) {
-            const index = favoritePrograms.indexOf(programId);
-            if (index === -1) {
-                if (favoritePrograms.length >= 20) { alert('Máximo 20 programas'); return; }
-                favoritePrograms.push(programId);
-            } else {
-                favoritePrograms.splice(index, 1);
-            }
-            localStorage.setItem('favoritePrograms', JSON.stringify(favoritePrograms));
+      function toggleProgramFavorite(programId) {
+    const index = favoritePrograms.indexOf(programId);
+    if (index === -1) {
+        if (favoritePrograms.length >= 20) { alert('Máximo 20 programas'); return; }
+        favoritePrograms.push(programId);
+    } else {
+        favoritePrograms.splice(index, 1);
+    }
+    localStorage.setItem('favoritePrograms', JSON.stringify(favoritePrograms));
 
-trackActivity(index === -1 ? 'program_favorited' : 'program_unfavorited', { 
-    program_id: programId, 
-    university: allPrograms.find(p => p.id === programId)?.universidad 
-});
+    trackActivity(index === -1 ? 'program_favorited' : 'program_unfavorited', { 
+        program_id: programId, 
+        university: allPrograms.find(p => p.id === programId)?.universidad 
+    });
+
+    updateFavoriteCounters();
+    displayPrograms(); // ✅ Ya existe - mantener
+    
+    // ✨ AGREGAR: Refrescar pestaña de favoritos si está activa
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'favoritePrograms') {
+        displayFavoritePrograms();
+    }
+}
 
             updateFavoriteCounters();
             displayPrograms();
         }
 
         function toggleScholarshipFavorite(scholarshipId) {
-            const index = favoriteScholarships.indexOf(scholarshipId);
-            if (index === -1) {
-                if (favoriteScholarships.length >= 20) { alert('Máximo 20 becas'); return; }
-                favoriteScholarships.push(scholarshipId);
-            } else {
-                favoriteScholarships.splice(index, 1);
-            }
-            localStorage.setItem('favoriteScholarships', JSON.stringify(favoriteScholarships));
+    const index = favoriteScholarships.indexOf(scholarshipId);
+    if (index === -1) {
+        if (favoriteScholarships.length >= 20) { alert('Máximo 20 becas'); return; }
+        favoriteScholarships.push(scholarshipId);
+    } else {
+        favoriteScholarships.splice(index, 1);
+    }
+    localStorage.setItem('favoriteScholarships', JSON.stringify(favoriteScholarships));
 
-trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited', { 
-    scholarship_id: scholarshipId,
-    scholarship_name: allScholarships.find(s => s.id === scholarshipId)?.Nombre_Beca
-});
+    trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited', { 
+        scholarship_id: scholarshipId,
+        scholarship_name: allScholarships.find(s => s.id === scholarshipId)?.Nombre_Beca
+    });
 
-            updateFavoriteCounters();
-        }
+    updateFavoriteCounters();
+    
+    // ✨ AGREGAR ESTOS REFRESCOS VISUALES
+    displayPrograms(); // Refresca las tarjetas de programas
+    
+    // Refrescar pestañas de favoritos si están activas
+    const activeTab = document.querySelector('.tab-content.active');
+    if (activeTab && activeTab.id === 'favoriteScholarships') {
+        displayFavoriteScholarships();
+    }
+}
 
         function updateFavoriteCounters() {
     document.getElementById('topFavoriteProgramsCount').textContent = favoritePrograms.length;
