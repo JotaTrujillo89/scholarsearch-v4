@@ -1242,21 +1242,45 @@ function trackExternalClick(programId, url, universityName) {
                 const finalCost = calculateFinalCost(program.precio_max_anual, scholarship);
                 const discountText = getDiscountText(scholarship);
 
-                html += `
-                    <div class="scholarship-item" onclick="selectScholarship(${program.id}, ${scholarship.id})">
-                        <div class="scholarship-header">
-                            <span class="scholarship-name">${scholarship.Nombre_Beca || 'Beca sin nombre'}</span>
-                            <button class="scholarship-favorite ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleScholarshipFavorite(${scholarship.id})">
-                                ${isFavorite ? '⭐' : '☆'}
-                            </button>
-                        </div>
-                        <div class="scholarship-details">
-                            Tipo: ${scholarship.Tipo_de_beca || 'No especificado'}<br>
-                            Descuento: ${discountText}<br>
-                            <strong>Costo final: $${formatCurrency(finalCost)}</strong>
-                        </div>
+               html += `
+    <div class="scholarship-item" onclick="selectScholarship(${program.id}, ${scholarship.id})">
+        <div class="scholarship-header">
+            <span class="scholarship-name">${scholarship.Nombre_Beca || 'Beca sin nombre'}</span>
+            <button class="scholarship-favorite ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); toggleScholarshipFavorite(${scholarship.id})">
+                ${isFavorite ? '⭐' : '☆'}
+            </button>
+        </div>
+        <div class="scholarship-details">
+            Tipo: ${scholarship.Tipo_de_beca || 'No especificado'}<br>
+            Descuento: ${discountText}<br>
+            <strong>Costo final: $${formatCurrency(finalCost)}</strong>
+            
+            ${(scholarship.criterios_de_beca || scholarship.requisitos_de_beca || scholarship.elegibilidad_de_beca) ? 
+                `<br><details style="margin-top: 10px;">
+                    <summary style="cursor: pointer; font-weight: 600; color: #667eea; padding: 5px;">📋 Ver Detalles Completos</summary>
+                    <div style="padding: 10px 0; font-size: 0.75rem; color: #555; line-height: 1.4; border-top: 1px solid #eee; margin-top: 5px;">
+                        ${scholarship.criterios_de_beca ? 
+                            `<div style="margin-bottom: 10px;">
+                                <strong style="color: #667eea;">📋 Criterios:</strong><br>
+                                <span style="color: #666;">${scholarship.criterios_de_beca}</span>
+                            </div>` : ''}
+                        
+                        ${scholarship.requisitos_de_beca ? 
+                            `<div style="margin-bottom: 10px;">
+                                <strong style="color: #667eea;">📝 Requisitos:</strong><br>
+                                <span style="color: #666;">${scholarship.requisitos_de_beca}</span>
+                            </div>` : ''}
+                        
+                        ${scholarship.elegibilidad_de_beca ? 
+                            `<div style="margin-bottom: 10px;">
+                                <strong style="color: #667eea;">✅ Elegibilidad:</strong><br>
+                                <span style="color: #666;">${scholarship.elegibilidad_de_beca}</span>
+                            </div>` : ''}
                     </div>
-                `;
+                </details>` : ''}
+        </div>
+    </div>
+`;
             });
             return html;
         }
