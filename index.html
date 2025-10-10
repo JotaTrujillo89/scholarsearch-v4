@@ -40,7 +40,7 @@
      /* GRID LAYOUT PRINCIPAL - 3 COLUMNAS EXACTAS */
 .main-container {
     max-width: 1400px;
-    margin: -70px auto 0 auto; /* Subir 70px */
+    margin: -120px auto 0 auto; /* ✨ Subir 120px en lugar de 70px */
     padding: 0 20px;
     display: grid;
     grid-template-columns: 300px 1fr 350px;
@@ -493,6 +493,8 @@
     margin-left: 340px; /* Alineado con panel central */
     border-radius: 15px;
     padding: 0 20px;
+    position: relative; /* ✨ AGREGAR */
+    z-index: 10; /* ✨ AGREGAR */
 }
 
 .top-panel-content {
