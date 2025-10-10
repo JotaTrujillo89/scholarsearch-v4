@@ -556,6 +556,88 @@
             color: white;
             border-color: #667eea;
         }
+  /* DUAL RANGE SLIDER STYLES */
+        .range-slider-container {
+            margin-top: 10px;
+        }
+
+        .range-values {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #667eea;
+            font-size: 0.9rem;
+        }
+
+        .dual-range-slider {
+            position: relative;
+            height: 20px;
+        }
+
+        .range-input {
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            pointer-events: none;
+            cursor: pointer;
+        }
+
+        .range-input::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            pointer-events: all;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .range-input::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            border: 2px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            pointer-events: all;
+            cursor: pointer;
+        }
+
+        .range-track {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: #e0e0e0;
+            border-radius: 3px;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        .range-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+            transition: all 0.1s ease;
+        }
+
+        .range-input:focus {
+            outline: none;
+        }
+
+        .range-input:focus::-webkit-slider-thumb {
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2), 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
 
         /* RESPONSIVE */
         @media (max-width: 1024px) {
@@ -654,8 +736,30 @@
     </div>
 </div>
 
+            <!-- 6. TUITION BASE - DUAL RANGE SLIDER -->
+<div class="filter-group">
+    <label for="tuitionRange">Tuition Base (USD):</label>
+    <div class="range-slider-container">
+        <!-- Valores actuales -->
+        <div class="range-values">
+            <span id="tuitionMinValue">$0</span>
+            <span id="tuitionMaxValue">$180,000</span>
+        </div>
+        <!-- Slider doble -->
+        <div class="dual-range-slider">
+            <input type="range" id="tuitionMin" min="0" max="180000" value="0" 
+                   oninput="updateTuitionRange()" class="range-input range-min">
+            <input type="range" id="tuitionMax" min="0" max="180000" value="180000" 
+                   oninput="updateTuitionRange()" class="range-input range-max">
+        </div>
+        <!-- Barra visual -->
+        <div class="range-track">
+            <div class="range-fill" id="tuitionFill"></div>
+        </div>
+    </div>
+</div>
 
-          <!-- 6. PRESUPUESTO FAMILIAR -->
+          <!-- 7. PRESUPUESTO FAMILIAR -->
             <div class="filter-group">
                 <label for="budgetAmount">Presupuesto Familiar:</label>
                 <div class="budget-container">
@@ -851,8 +955,10 @@ function trackExternalClick(programId, url, universityName) {
 
         // INICIALIZACIÓN
         document.addEventListener('DOMContentLoaded', function() {
-            loadUniversities(); loadScholarships(); updateFavoriteCounters();
-        });
+    loadUniversities(); loadScholarships(); updateFavoriteCounters();
+    // Inicializar slider después que se carguen los datos
+    setTimeout(initializeTuitionSlider, 1000);
+});
 
         // CARGAR DATOS DESDE DIRECTUS
         async function loadUniversities() {
@@ -1444,6 +1550,113 @@ trackActivity(index === -1 ? 'scholarship_favorited' : 'scholarship_unfavorited'
             setTimeout(updateResultsCount, 1000);
         });
 
+// =============================================================================
+// DUAL RANGE SLIDER PARA TUITION
+// =============================================================================
+
+// Variables globales para tuition
+let maxTuitionInData = 180000; // Se calculará dinámicamente
+
+// Función para inicializar el slider de tuition
+function initializeTuitionSlider() {
+    // Calcular el tuition máximo real de los datos
+    if (allPrograms.length > 0) {
+        maxTuitionInData = Math.max(...allPrograms.map(p => parseFloat(p.precio_max_anual) || 0));
+        // Redondear hacia arriba a la decena de miles más cercana
+        maxTuitionInData = Math.ceil(maxTuitionInData / 10000) * 10000;
+        
+        // Actualizar sliders con el máximo real
+        document.getElementById('tuitionMin').max = maxTuitionInData;
+        document.getElementById('tuitionMax').max = maxTuitionInData;
+        document.getElementById('tuitionMax').value = maxTuitionInData;
+        
+        // Actualizar display
+        updateTuitionRange();
+    }
+}
+
+// Función para actualizar el slider de tuition
+function updateTuitionRange() {
+    const minSlider = document.getElementById('tuitionMin');
+    const maxSlider = document.getElementById('tuitionMax');
+    const minValue = parseInt(minSlider.value);
+    const maxValue = parseInt(maxSlider.value);
+    
+    // Evitar que se crucen los sliders
+    if (minValue >= maxValue) {
+        if (event.target === minSlider) {
+            minSlider.value = maxValue - 1000;
+        } else {
+            maxSlider.value = minValue + 1000;
+        }
+        return updateTuitionRange(); // Recalcular
+    }
+    
+    // Actualizar display de valores
+    document.getElementById('tuitionMinValue').textContent = `$${formatCurrency(minValue)}`;
+    document.getElementById('tuitionMaxValue').textContent = `$${formatCurrency(maxValue)}`;
+    
+    // Actualizar barra visual
+    const percentage1 = (minValue / maxTuitionInData) * 100;
+    const percentage2 = (maxValue / maxTuitionInData) * 100;
+    
+    const fill = document.getElementById('tuitionFill');
+    fill.style.left = percentage1 + '%';
+    fill.style.width = (percentage2 - percentage1) + '%';
+    
+    // Aplicar filtros automáticamente
+    applyFilters();
+}
+
+// Extender la función applyFilters existente para incluir tuition
+const originalApplyFilters = applyFilters;
+applyFilters = function() {
+    const searchTerm = document.getElementById('programSearch').value.toLowerCase();
+    const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
+    const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
+    const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
+    const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
+    const budgetAmount = parseFloat(document.getElementById('budgetAmount').value) || 0;
+    const budgetCurrency = document.getElementById('budgetCurrency').value;
+    const budgetInUSD = budgetAmount / exchangeRates[budgetCurrency];
+    
+    // NUEVO: Filtro de tuition range
+    const tuitionMin = parseInt(document.getElementById('tuitionMin')?.value || 0);
+    const tuitionMax = parseInt(document.getElementById('tuitionMax')?.value || maxTuitionInData);
+
+    filteredPrograms = allPrograms.filter(program => {
+        const matchesSearch = !searchTerm || 
+            (program.programa && program.programa.toLowerCase().includes(searchTerm)) ||
+            (program.nombre_programa && program.nombre_programa.toLowerCase().includes(searchTerm)) ||
+            (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
+        const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
+        const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
+        const matchesCity = selectedCities.length === 0 || selectedCities.includes(program.estado) || selectedCities.includes(program.lugar);
+        
+        // NUEVO: Filtro de tuition
+        const programTuition = parseFloat(program.precio_max_anual) || 0;
+        const matchesTuition = programTuition >= tuitionMin && programTuition <= tuitionMax;
+
+        let matchesBudget = true;
+        if (budgetAmount > 0) {
+            const bestCost = calculateBestCost(program);
+            matchesBudget = bestCost <= budgetInUSD;
+        }
+
+        let matchesScholarshipType = true;
+        if (selectedScholarshipTypes.length > 0) {
+            const programScholarships = getScholarshipsForUniversity(program.universidad);
+            matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
+        }
+
+        return matchesSearch && matchesType && matchesCountry && matchesCity && matchesTuition && matchesBudget && matchesScholarshipType;
+    });
+
+    currentPage = 1;
+    displayPrograms();
+    updatePagination();
+};
+        
         // =============================================================================
 // FILTRO DE BÚSQUEDA DE CIUDADES
 // =============================================================================
@@ -1505,6 +1718,4 @@ function populateCityFilterComplete() {
 </body>
 </html>
         
-    </script>
-</body>
-</html>
+  
