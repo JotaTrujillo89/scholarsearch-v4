@@ -954,23 +954,25 @@ function trackExternalClick(programId, url, universityName) {
         document.addEventListener('DOMContentLoaded', function() {
     loadUniversities(); loadScholarships(); updateFavoriteCounters();
     // Inicializar slider después que se carguen los datos
-    setTimeout(initializeTuitionSlider, 1000);
-});
+    });
 
         // CARGAR DATOS DESDE DIRECTUS
-        async function loadUniversities() {
-            try {
-                const response = await fetch('https://directus-production-b9b1.up.railway.app/items/universidades?limit=-1');
-                const data = await response.json();
-                allPrograms = data.data || data;
-                console.log(`Universidades cargadas: ${allPrograms.length}`);
-                populateFilters(); applyFilters();
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('resultsContainer').innerHTML = 
-                    '<div class="error">Error de conexión. Verifica conexión a Railway<br><button class="pagination-btn" onclick="loadUniversities()">Reintentar</button></div>';
-            }
-        }
+       async function loadUniversities() {
+    try {
+        const response = await fetch('https://directus-production-b9b1.up.railway.app/items/universidades?limit=-1');
+        const data = await response.json();
+        allPrograms = data.data || data;
+        console.log(`Universidades cargadas: ${allPrograms.length}`);
+        populateFilters(); 
+        applyFilters();
+        // ✨ INICIALIZAR SLIDER DESPUÉS DE CARGAR DATOS
+        initializeTuitionSlider();
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('resultsContainer').innerHTML = 
+            '<div class="error">Error de conexión. Verifica conexión a Railway<br><button class="pagination-btn" onclick="loadUniversities()">Reintentar</button></div>';
+    }
+}
 
         async function loadScholarships() {
             try {
