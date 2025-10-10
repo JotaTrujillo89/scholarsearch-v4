@@ -612,15 +612,12 @@
             cursor: pointer;
         }
 
-        .range-track {
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
+            .range-track {
+            position: relative;
             height: 6px;
             background: #e0e0e0;
             border-radius: 3px;
-            transform: translateY(-50%);
+            margin-top: 7px;
             z-index: 1;
         }
 
@@ -1562,15 +1559,21 @@ function initializeTuitionSlider() {
     // Calcular el tuition máximo real de los datos
     if (allPrograms.length > 0) {
         maxTuitionInData = Math.max(...allPrograms.map(p => parseFloat(p.precio_max_anual) || 0));
+        console.log('Tuition máximo encontrado:', maxTuitionInData);
+        
         // Redondear hacia arriba a la decena de miles más cercana
         maxTuitionInData = Math.ceil(maxTuitionInData / 10000) * 10000;
+        console.log('Tuition máximo redondeado:', maxTuitionInData);
         
         // Actualizar sliders con el máximo real
         document.getElementById('tuitionMin').max = maxTuitionInData;
         document.getElementById('tuitionMax').max = maxTuitionInData;
         document.getElementById('tuitionMax').value = maxTuitionInData;
         
-        // Actualizar display
+        // Actualizar display inicial
+        document.getElementById('tuitionMaxValue').textContent = `$${formatCurrency(maxTuitionInData)}`;
+        
+        // Actualizar display completo
         updateTuitionRange();
     }
 }
