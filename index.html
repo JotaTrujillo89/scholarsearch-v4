@@ -50,17 +50,17 @@
 }
 
         /* PANEL IZQUIERDO - FILTROS CON SCROLL */
-       .filters-panel {
+     .filters-panel {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 15px;
     padding: 25px;
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     position: relative;
-    top: -220px; /* ✨ Hasta el tope absoluto */
-    max-height: calc(100vh + 180px); /* ✨ Máxima extensión */
-    overflow-y: auto;
-    margin-bottom: -160px;
+    top: -180px;
+    max-height: none; /* ✨ Sin límite de altura */
+    overflow-y: visible; /* ✨ Sin scroll propio */
+    margin-bottom: -120px;
 }
 
         .filters-panel h3 {
@@ -490,9 +490,10 @@
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    margin: -20px auto 0 auto; /* ✨ Subir panel superior */
+    margin: -20px auto 0 auto;
     margin-left: 340px;
     max-width: 1080px;
+    width: calc(100% - 340px); /* ✨ Extender hasta el borde derecho */
     border-radius: 15px;
     padding: 0 20px;
     position: relative;
