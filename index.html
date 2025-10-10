@@ -758,9 +758,74 @@
         </div>
     </div>
 </div>
+<!-- 7. DURACIÓN DE PROGRAMAS - CHECKBOXES DINÁMICOS -->
+<div class="filter-group">
+    <label>Duración del Programa:</label>
+    <div class="checkbox-group" id="durationFilter">
+        <!-- Se genera dinámicamente según otros filtros aplicados -->
+        <div class="loading" style="padding: 10px; text-align: center; color: #666;">
+            Aplicando filtros...
+        </div>
+    </div>
+</div>
+
+<!-- 8. PORCENTAJE DE BECA - DUAL RANGE SLIDER -->
+<div class="filter-group">
+    <label for="scholarshipPercentageRange">Porcentaje de Beca (%):</label>
+    <div class="range-slider-container">
+        <!-- Valores actuales -->
+        <div class="range-values">
+            <span id="percentageMinValue">0%</span>
+            <span id="percentageMaxValue">100%</span>
+        </div>
+        <!-- Slider doble -->
+        <div class="dual-range-slider">
+            <input type="range" id="percentageMin" min="0" max="100" value="0" 
+                   oninput="updatePercentageRange()" class="range-input range-min">
+            <input type="range" id="percentageMax" min="0" max="100" value="100" 
+                   oninput="updatePercentageRange()" class="range-input range-max">
+        </div>
+        <!-- Barra visual -->
+        <div class="range-track">
+            <div class="range-fill" id="percentageFill"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 9. MONTO DE BECA - DUAL RANGE SLIDER -->
+<div class="filter-group">
+    <label for="scholarshipAmountRange">Monto de Beca (USD):</label>
+    <div class="range-slider-container">
+        <!-- Valores actuales -->
+        <div class="range-values">
+            <span id="amountMinValue">$0</span>
+            <span id="amountMaxValue">$50,000</span>
+        </div>
+        <!-- Slider doble -->
+        <div class="dual-range-slider">
+            <input type="range" id="amountMin" min="0" max="50000" value="0" step="1000"
+                   oninput="updateAmountRange()" class="range-input range-min">
+            <input type="range" id="amountMax" min="0" max="50000" value="50000" step="1000"
+                   oninput="updateAmountRange()" class="range-input range-max">
+        </div>
+        <!-- Barra visual -->
+        <div class="range-track">
+            <div class="range-fill" id="amountFill"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 10. BOTÓN CLEAR ALL FILTERS -->
+<div class="filter-group" style="margin-top: 30px;">
+    <button class="scholarships-toggle" onclick="clearAllFilters()" 
+            style="background: #ff6b6b; color: white; border-color: #ff6b6b;">
+        🗑️ Limpiar Todos los Filtros
+    </button>
+</div>
 
                </div>
 
+        
         <!-- PANEL CENTRAL - PESTAÑAS Y RESULTADOS -->
         <div class="results-panel">
             <!-- SISTEMA DE PESTAÑAS -->
@@ -956,6 +1021,8 @@ function trackExternalClick(programId, url, universityName) {
         applyFilters();
         // ✨ INICIALIZAR SLIDER DESPUÉS DE CARGAR DATOS
         initializeTuitionSlider();
+        initializeScholarshipSliders(); // ← NUEVO
+        updateDurationFilter(); // ← NUEVO: Poblar duraciones iniciales
     } catch (error) {
         console.error('Error:', error);
         document.getElementById('resultsContainer').innerHTML = 
@@ -1000,6 +1067,7 @@ function trackExternalClick(programId, url, universityName) {
             });
         }
 
+        
         function populateScholarshipTypeFilter() {
             const types = [...new Set(allScholarships.map(s => s.Tipo_de_beca).filter(t => t))].sort();
             const container = document.getElementById('scholarshipTypeFilter');
@@ -1014,44 +1082,92 @@ function trackExternalClick(programId, url, universityName) {
 
         // APLICAR FILTROS
         function applyFilters() {
-            const searchTerm = document.getElementById('programSearch').value.toLowerCase();
-            const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
-            const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
-            const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
-            const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
-            const budgetAmount = parseFloat(document.getElementById('topBudgetAmount').value) || 0;
-const budgetCurrency = 'USD';
-const budgetInUSD = budgetAmount; // Ya está en USD
+    const searchTerm = document.getElementById('programSearch').value.toLowerCase();
+    const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
+    const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
+    const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
+    const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
+    const selectedDurations = Array.from(document.querySelectorAll('#durationFilter input:checked')).map(cb => parseFloat(cb.value));
+    const budgetAmount = parseFloat(document.getElementById('topBudgetAmount').value) || 0;
+    const budgetInUSD = budgetAmount;
+    
+    // Filtros de rango
+    const tuitionMin = parseInt(document.getElementById('tuitionMin')?.value || 0);
+    const tuitionMax = parseInt(document.getElementById('tuitionMax')?.value || maxTuitionInData);
+    const percentageMin = parseInt(document.getElementById('percentageMin')?.value || 0);
+    const percentageMax = parseInt(document.getElementById('percentageMax')?.value || maxPercentageInData);
+    const amountMin = parseInt(document.getElementById('amountMin')?.value || 0);
+    const amountMax = parseInt(document.getElementById('amountMax')?.value || maxAmountInData);
 
-            filteredPrograms = allPrograms.filter(program => {
-                const matchesSearch = !searchTerm || 
-                    (program.programa && program.programa.toLowerCase().includes(searchTerm)) ||
-                    (program.nombre_programa && program.nombre_programa.toLowerCase().includes(searchTerm)) ||
-                    (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
-                const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
-                const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
-                const matchesCity = selectedCities.length === 0 || selectedCities.includes(program.estado) || selectedCities.includes(program.lugar);
-                
+    filteredPrograms = allPrograms.filter(program => {
+        const matchesSearch = !searchTerm || 
+            (program.programa && program.programa.toLowerCase().includes(searchTerm)) ||
+            (program.nombre_programa && program.nombre_programa.toLowerCase().includes(searchTerm)) ||
+            (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
+        const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
+        const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
+        const matchesCity = selectedCities.length === 0 || selectedCities.includes(program.estado) || selectedCities.includes(program.lugar);
+        
+        // Filtro de tuition
+        const programTuition = parseFloat(program.precio_max_anual) || 0;
+        const matchesTuition = programTuition >= tuitionMin && programTuition <= tuitionMax;
+        
+        // NUEVO: Filtro de duración
+        const programDuration = parseFloat(program.duracion_max_anos);
+        const matchesDuration = selectedDurations.length === 0 || 
+            (programDuration && selectedDurations.includes(programDuration));
 
-                let matchesBudget = true;
-                if (budgetAmount > 0) {
-                    const bestCost = calculateBestCost(program);
-                    matchesBudget = bestCost <= budgetInUSD;
-                }
-
-                let matchesScholarshipType = true;
-                if (selectedScholarshipTypes.length > 0) {
-                    const programScholarships = getScholarshipsForUniversity(program.universidad);
-                    matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
-                }
-
-               return matchesSearch && matchesType && matchesCountry && matchesCity && matchesBudget && matchesScholarshipType;
-            });
-
-            currentPage = 1;
-            displayPrograms();
-            updatePagination();
+        let matchesBudget = true;
+        if (budgetAmount > 0) {
+            const bestCost = calculateBestCost(program);
+            matchesBudget = bestCost <= budgetInUSD;
         }
+
+        let matchesScholarshipType = true;
+        let matchesScholarshipPercentage = true;
+        let matchesScholarshipAmount = true;
+        
+        if (selectedScholarshipTypes.length > 0 || percentageMin > 0 || percentageMax < maxPercentageInData || amountMin > 0 || amountMax < maxAmountInData) {
+            const programScholarships = getScholarshipsForUniversity(program.universidad);
+            
+            if (selectedScholarshipTypes.length > 0) {
+                matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
+            }
+            
+            // Filtro de porcentaje de beca
+            if (percentageMin > 0 || percentageMax < maxPercentageInData) {
+                matchesScholarshipPercentage = programScholarships.some(s => {
+                    let pct = parseFloat(s.Porcentaje_hasta) || parseFloat(s.Porcentaje_desde) || 0;
+                    if (pct > 1) pct = pct; // Ya está en porcentaje
+                    else pct = pct * 100; // Convertir de decimal a porcentaje
+                    return pct >= percentageMin && pct <= percentageMax;
+                });
+            }
+            
+            // Filtro de monto de beca
+            if (amountMin > 0 || amountMax < maxAmountInData) {
+                matchesScholarshipAmount = programScholarships.some(s => {
+                    const amount = parseFloat(s.Monto_hasta) || parseFloat(s.Monto_desde) || 0;
+                    return amount >= amountMin && amount <= amountMax;
+                });
+            }
+        }
+
+        return matchesSearch && matchesType && matchesCountry && matchesCity && matchesTuition && 
+               matchesDuration && matchesBudget && matchesScholarshipType && 
+               matchesScholarshipPercentage && matchesScholarshipAmount;
+    });
+
+    currentPage = 1;
+    displayPrograms();
+    updatePagination();
+    
+    // 🔄 ACTUALIZAR DURACIONES DISPONIBLES DESPUÉS DE APLICAR OTROS FILTROS
+    // Solo si no se está filtrando desde el filtro de duración
+    if (!event || !event.target || !event.target.closest('#durationFilter')) {
+        updateDurationFilter();
+    }
+}
 
         // MOSTRAR PROGRAMAS
         function displayPrograms() {
@@ -1111,8 +1227,9 @@ const budgetInUSD = budgetAmount; // Ya está en USD
                 `;
             });
 
-            container.innerHTML = html;
+             container.innerHTML = html;
             document.getElementById('paginationContainer').style.display = filteredPrograms.length > itemsPerPage ? 'flex' : 'none';
+            updateResultsCount(); // ✅ AGREGAR ESTA LÍNEA
         }
 
         // GENERAR HTML DE BECAS
@@ -1284,10 +1401,6 @@ const budgetInUSD = budgetAmount; // Ya está en USD
         displayFavoritePrograms();
     }
 }
-
-            updateFavoriteCounters();
-            displayPrograms();
-        }
 
         function toggleScholarshipFavorite(scholarshipId) {
     const index = favoriteScholarships.indexOf(scholarshipId);
@@ -1503,16 +1616,14 @@ const budgetInUSD = budgetAmount; // Ya está en USD
 
         // 1. SINCRONIZACIÓN DE PRESUPUESTO ENTRE PANELES
         function syncBudget(value) {
-            // Sincronizar con el filtro principal
-            document.getElementById('budgetAmount').value = value;
-            // Aplicar filtros automáticamente
-            applyFilters();
-            // Actualizar comparación de presupuesto si hay cálculo activo
-            if (selectedProgram && selectedScholarship) {
-                const finalCost = calculateFinalCost(selectedProgram.precio_max_anual, selectedScholarship);
-                updateBudgetComparison(finalCost);
-            }
-        }
+    // Aplicar filtros automáticamente
+    applyFilters();
+    // Actualizar comparación de presupuesto si hay cálculo activo
+    if (selectedProgram && selectedScholarship) {
+        const finalCost = calculateFinalCost(selectedProgram.precio_max_anual, selectedScholarship);
+        updateBudgetComparison(finalCost);
+    }
+}
 
         // 2. ACTUALIZAR CONTADOR DE RESULTADOS EN PANEL SUPERIOR
         function updateResultsCount() {
@@ -1537,26 +1648,7 @@ const budgetInUSD = budgetAmount; // Ya está en USD
             document.getElementById('topFavoriteScholarshipsCount').textContent = favoriteScholarships.length;
         }
 
-        // 4. SOBRESCRIBIR FUNCIONES EXISTENTES PARA INTEGRACIÓN
-        // Extender la función displayPrograms existente
-        const originalDisplayPrograms = displayPrograms;
-        displayPrograms = function() {
-            originalDisplayPrograms();
-            updateResultsCount();
-        };
-
-        // Extender la función updateFavoriteCounters existente  
-        const originalUpdateFavoriteCounters = updateFavoriteCounters;
-        updateFavoriteCounters = function() {
-            originalUpdateFavoriteCounters();
-            updateTopFavoriteCounters();
-        };
-
-        // Inicializar contador al cargar
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(updateResultsCount, 1000);
-        });
-
+       
 // =============================================================================
 // DUAL RANGE SLIDER PARA TUITION
 // =============================================================================
@@ -1621,54 +1713,7 @@ function updateTuitionRange() {
     applyFilters();
 }
 
-// Extender la función applyFilters existente para incluir tuition
-const originalApplyFilters = applyFilters;
-applyFilters = function() {
-    const searchTerm = document.getElementById('programSearch').value.toLowerCase();
-    const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
-    const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
-    const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
-    const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
-    const budgetAmount = parseFloat(document.getElementById('topBudgetAmount').value) || 0;
-const budgetCurrency = 'USD';
-const budgetInUSD = budgetAmount; // Ya está en USD
-    
-    // NUEVO: Filtro de tuition range
-    const tuitionMin = parseInt(document.getElementById('tuitionMin')?.value || 0);
-    const tuitionMax = parseInt(document.getElementById('tuitionMax')?.value || maxTuitionInData);
 
-    filteredPrograms = allPrograms.filter(program => {
-        const matchesSearch = !searchTerm || 
-            (program.programa && program.programa.toLowerCase().includes(searchTerm)) ||
-            (program.nombre_programa && program.nombre_programa.toLowerCase().includes(searchTerm)) ||
-            (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
-        const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
-        const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
-        const matchesCity = selectedCities.length === 0 || selectedCities.includes(program.estado) || selectedCities.includes(program.lugar);
-        
-        // NUEVO: Filtro de tuition
-        const programTuition = parseFloat(program.precio_max_anual) || 0;
-        const matchesTuition = programTuition >= tuitionMin && programTuition <= tuitionMax;
-
-        let matchesBudget = true;
-        if (budgetAmount > 0) {
-            const bestCost = calculateBestCost(program);
-            matchesBudget = bestCost <= budgetInUSD;
-        }
-
-        let matchesScholarshipType = true;
-        if (selectedScholarshipTypes.length > 0) {
-            const programScholarships = getScholarshipsForUniversity(program.universidad);
-            matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
-        }
-
-        return matchesSearch && matchesType && matchesCountry && matchesCity && matchesTuition && matchesBudget && matchesScholarshipType;
-    });
-
-    currentPage = 1;
-    displayPrograms();
-    updatePagination();
-};
         
         // =============================================================================
 // FILTRO DE BÚSQUEDA DE CIUDADES
@@ -1726,7 +1771,219 @@ function populateCityFilterComplete() {
         container.appendChild(div);
     });
 }
-       
+
+
+// =============================================================================
+// FILTROS ADICIONALES INTELIGENTES Y DINÁMICOS
+// =============================================================================
+
+// Variables globales
+let maxPercentageInData = 100;
+let maxAmountInData = 50000;
+let availableDurations = [];
+
+// Función para inicializar sliders de becas
+function initializeScholarshipSliders() {
+    if (allScholarships.length > 0) {
+        // Calcular porcentaje máximo real
+        const percentages = allScholarships.map(s => {
+            const pct = parseFloat(s.Porcentaje_hasta) || parseFloat(s.Porcentaje_desde) || 0;
+            return pct > 1 ? pct : pct * 100; // Normalizar a porcentaje
+        }).filter(p => p > 0);
+        
+        // Calcular monto máximo real
+        const amounts = allScholarships.map(s => 
+            parseFloat(s.Monto_hasta) || parseFloat(s.Monto_desde) || 0
+        ).filter(a => a > 0);
+        
+        if (percentages.length > 0) {
+            maxPercentageInData = Math.min(100, Math.max(...percentages));
+            document.getElementById('percentageMax').max = maxPercentageInData;
+            document.getElementById('percentageMax').value = maxPercentageInData;
+        }
+        
+        if (amounts.length > 0) {
+            maxAmountInData = Math.max(...amounts);
+            // Redondear hacia arriba
+            maxAmountInData = Math.ceil(maxAmountInData / 10000) * 10000;
+            document.getElementById('amountMax').max = maxAmountInData;
+            document.getElementById('amountMax').value = maxAmountInData;
+        }
+    }
+    
+    // Actualizar displays iniciales
+    updatePercentageRange();
+    updateAmountRange();
+}
+
+// Función para actualizar filtro de duración DINÁMICAMENTE
+function updateDurationFilter() {
+    const searchTerm = document.getElementById('programSearch').value.toLowerCase();
+    const selectedTypes = Array.from(document.querySelectorAll('#programTypeFilter input:checked')).map(cb => cb.value);
+    const selectedCountries = Array.from(document.querySelectorAll('#countryFilter input:checked')).map(cb => cb.value);
+    const selectedCities = Array.from(document.querySelectorAll('#cityFilter input:checked')).map(cb => cb.value);
+    const selectedScholarshipTypes = Array.from(document.querySelectorAll('#scholarshipTypeFilter input:checked')).map(cb => cb.value);
+    const tuitionMin = parseInt(document.getElementById('tuitionMin')?.value || 0);
+    const tuitionMax = parseInt(document.getElementById('tuitionMax')?.value || maxTuitionInData);
+    
+    // Filtrar programas según filtros actuales (SIN duración)
+    let relevantPrograms = allPrograms.filter(program => {
+        const matchesSearch = !searchTerm || 
+            (program.programa && program.programa.toLowerCase().includes(searchTerm)) ||
+            (program.nombre_programa && program.nombre_programa.toLowerCase().includes(searchTerm)) ||
+            (program.universidad && program.universidad.toLowerCase().includes(searchTerm));
+        const matchesType = selectedTypes.length === 0 || selectedTypes.includes(program.tipo);
+        const matchesCountry = selectedCountries.length === 0 || selectedCountries.includes(program.pais);
+        const matchesCity = selectedCities.length === 0 || selectedCities.includes(program.estado) || selectedCities.includes(program.lugar);
+        const programTuition = parseFloat(program.precio_max_anual) || 0;
+        const matchesTuition = programTuition >= tuitionMin && programTuition <= tuitionMax;
+        
+        let matchesScholarshipType = true;
+        if (selectedScholarshipTypes.length > 0) {
+            const programScholarships = getScholarshipsForUniversity(program.universidad);
+            matchesScholarshipType = programScholarships.some(s => selectedScholarshipTypes.includes(s.Tipo_de_beca));
+        }
+        
+        return matchesSearch && matchesType && matchesCountry && matchesCity && matchesTuition && matchesScholarshipType;
+    });
+    
+    // Extraer duraciones DISPONIBLES de programas filtrados
+    const durations = [...new Set(relevantPrograms.map(p => {
+        const duration = parseFloat(p.duracion_max_anos);
+        return duration && duration > 0 ? duration : null;
+    }).filter(d => d !== null))].sort((a, b) => a - b);
+    
+    availableDurations = durations;
+    
+    // Regenerar checkboxes de duración
+    const container = document.getElementById('durationFilter');
+    const selectedDurations = Array.from(container.querySelectorAll('input:checked')).map(cb => parseFloat(cb.value));
+    
+    container.innerHTML = '';
+    
+    if (durations.length === 0) {
+        container.innerHTML = '<div style="padding: 10px; color: #666; font-style: italic;">No hay duraciones disponibles</div>';
+        return;
+    }
+    
+    durations.forEach(duration => {
+        const div = document.createElement('div');
+        div.className = 'checkbox-item';
+        const isSelected = selectedDurations.includes(duration);
+        div.innerHTML = `
+            <input type="checkbox" id="duration_${duration}" value="${duration}" 
+                   ${isSelected ? 'checked' : ''} onchange="applyFilters()">
+            <label for="duration_${duration}">${duration} año${duration > 1 ? 's' : ''}</label>
+        `;
+        container.appendChild(div);
+    });
+    
+    console.log(`🔄 Duraciones disponibles actualizadas: ${durations.join(', ')} años`);
+}
+
+// Función para actualizar slider de porcentaje
+function updatePercentageRange() {
+    const minSlider = document.getElementById('percentageMin');
+    const maxSlider = document.getElementById('percentageMax');
+    const minValue = parseInt(minSlider.value);
+    const maxValue = parseInt(maxSlider.value);
+    
+    // Evitar que se crucen
+    if (minValue >= maxValue) {
+        if (event.target === minSlider) {
+            minSlider.value = maxValue - 5;
+        } else {
+            maxSlider.value = minValue + 5;
+        }
+        return updatePercentageRange();
+    }
+    
+    // Actualizar display
+    document.getElementById('percentageMinValue').textContent = `${minValue}%`;
+    document.getElementById('percentageMaxValue').textContent = `${maxValue}%`;
+    
+    // Actualizar barra visual
+    const percentage1 = (minValue / maxPercentageInData) * 100;
+    const percentage2 = (maxValue / maxPercentageInData) * 100;
+    
+    const fill = document.getElementById('percentageFill');
+    fill.style.left = percentage1 + '%';
+    fill.style.width = (percentage2 - percentage1) + '%';
+    
+    applyFilters();
+}
+
+// Función para actualizar slider de monto
+function updateAmountRange() {
+    const minSlider = document.getElementById('amountMin');
+    const maxSlider = document.getElementById('amountMax');
+    const minValue = parseInt(minSlider.value);
+    const maxValue = parseInt(maxSlider.value);
+    
+    // Evitar que se crucen
+    if (minValue >= maxValue) {
+        if (event.target === minSlider) {
+            minSlider.value = maxValue - 1000;
+        } else {
+            maxSlider.value = minValue + 1000;
+        }
+        return updateAmountRange();
+    }
+    
+    // Actualizar display
+    document.getElementById('amountMinValue').textContent = `$${formatCurrency(minValue)}`;
+    document.getElementById('amountMaxValue').textContent = `$${formatCurrency(maxValue)}`;
+    
+    // Actualizar barra visual
+    const percentage1 = (minValue / maxAmountInData) * 100;
+    const percentage2 = (maxValue / maxAmountInData) * 100;
+    
+    const fill = document.getElementById('amountFill');
+    fill.style.left = percentage1 + '%';
+    fill.style.width = (percentage2 - percentage1) + '%';
+    
+    applyFilters();
+}
+
+// Función para limpiar todos los filtros
+function clearAllFilters() {
+    // Limpiar campos de texto
+    document.getElementById('programSearch').value = '';
+    document.getElementById('citySearch').value = '';
+    document.getElementById('topBudgetAmount').value = '';
+    
+    // Limpiar checkboxes
+    document.querySelectorAll('#programTypeFilter input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#countryFilter input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#cityFilter input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#scholarshipTypeFilter input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#durationFilter input[type="checkbox"]').forEach(cb => cb.checked = false);
+    
+    // Resetear sliders
+    document.getElementById('tuitionMin').value = 0;
+    document.getElementById('tuitionMax').value = maxTuitionInData;
+    document.getElementById('percentageMin').value = 0;
+    document.getElementById('percentageMax').value = maxPercentageInData;
+    document.getElementById('amountMin').value = 0;
+    document.getElementById('amountMax').value = maxAmountInData;
+    
+    // Actualizar displays de sliders
+    updateTuitionRange();
+    updatePercentageRange();
+    updateAmountRange();
+    
+    // Restaurar todas las ciudades
+    populateCityFilterComplete();
+    
+    // Restaurar todas las duraciones
+    updateDurationFilter();
+    
+    // Aplicar filtros (mostrará todos los resultados)
+    applyFilters();
+    
+    console.log('🗑️ Todos los filtros limpiados');
+}
+        
     </script>
 </body>
 </html>
