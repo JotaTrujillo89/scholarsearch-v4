@@ -1629,53 +1629,316 @@ const budgetInUSD = budgetAmount; // Ya está en USD
             return program.duracion_max_anos ? `${program.duracion_max_anos} años` : 'No especificada';
         }
 
-        // EXPORT PDF
+         // =============================================================================
+        // EXPORT PDF - FORMATO HORIZONTAL PROFESIONAL
+        // =============================================================================
+        
         function exportFavoritePrograms() {
-            if (favoritePrograms.length === 0) { alert('No hay programas favoritos'); return; }
+            if (favoritePrograms.length === 0) { 
+                alert('No hay programas favoritos para exportar'); 
+                return; 
+            }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(20);
-            doc.text('Programas Favoritos - ScholarsSearch', 20, 20);
-            doc.setFontSize(10);
-            doc.text(`Generado: ${new Date().toLocaleDateString()}`, 20, 30);
-
-            let y = 45;
+            // 🔥 CAMBIO CLAVE: FORMATO HORIZONTAL
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+            
+            // =============================================================================
+            // HEADER CORPORATIVO HORIZONTAL
+            // =============================================================================
+            
+            // Fondo del header
+            doc.setFillColor(102, 126, 234);
+            doc.rect(0, 0, 297, 30, 'F'); // A4 horizontal = 297mm ancho
+            
+            // Logo y datos corporativos
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text('INTERNATIONAL LEARNING', 15, 12);
+            
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.text('📧 contacto@internationallearning.ec  |  📱 +593-XX-XXX-XXXX  |  🌐 www.internationallearning.ec', 15, 20);
+            
+            // Fecha (derecha)
+            doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, 230, 25);
+            
+            // =============================================================================
+            // TÍTULO PRINCIPAL
+            // =============================================================================
+            
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text('TUS PROGRAMAS FAVORITOS - COMPARATIVA', 15, 45);
+            
+            // Línea separadora
+            doc.setDrawColor(102, 126, 234);
+            doc.setLineWidth(0.5);
+            doc.line(15, 50, 280, 50);
+            
+            // =============================================================================
+            // TABLA COMPARATIVA HORIZONTAL
+            // =============================================================================
+            
             const favorites = allPrograms.filter(p => favoritePrograms.includes(p.id));
-            favorites.forEach((program, i) => {
-                if (y > 250) { doc.addPage(); y = 20; }
-                doc.setFontSize(14);
-                doc.text(`${i + 1}. ${program.programa || program.nombre_programa}`, 20, y); y += 7;
-                doc.setFontSize(10);
-                doc.text(`Universidad: ${program.universidad}`, 25, y); y += 5;
-                doc.text(`País: ${program.pais}`, 25, y); y += 5;
-                doc.text(`Precio: $${formatCurrency(program.precio_max_anual)}`, 25, y); y += 10;
+            let yPosition = 60;
+            
+            // Headers de la tabla
+            doc.setFillColor(248, 249, 255);
+            doc.rect(15, yPosition, 265, 8, 'F');
+            
+            doc.setTextColor(102, 126, 234);
+            doc.setFontSize(9);
+            doc.setFont("helvetica", "bold");
+            
+            // 🔥 POSICIONES HORIZONTALES AMPLIAS
+            const colPositions = [18, 100, 160, 200, 240];
+            const headers = ['PROGRAMA', 'UNIVERSIDAD', 'DURACIÓN', 'TUITION ANUAL', 'BECAS'];
+            
+            headers.forEach((header, i) => {
+                doc.text(header, colPositions[i], yPosition + 5);
             });
-            doc.save('programas-favoritos.pdf');
+            
+            yPosition += 12;
+            
+            // Datos de cada programa
+            doc.setTextColor(0, 0, 0);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            
+            favorites.forEach((program, index) => {
+                // Verificar si necesitamos nueva página
+                if (yPosition > 180) {
+                    doc.addPage();
+                    yPosition = 20;
+                    
+                    // Repetir headers en nueva página
+                    doc.setFillColor(248, 249, 255);
+                    doc.rect(15, yPosition, 265, 8, 'F');
+                    doc.setTextColor(102, 126, 234);
+                    doc.setFont("helvetica", "bold");
+                    headers.forEach((header, i) => {
+                        doc.text(header, colPositions[i], yPosition + 5);
+                    });
+                    yPosition += 12;
+                    doc.setTextColor(0, 0, 0);
+                    doc.setFont("helvetica", "normal");
+                }
+                
+                // Alternar color de fila
+                if (index % 2 === 0) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(15, yPosition - 2, 265, 10, 'F');
+                }
+                
+                // Obtener becas del programa
+                const scholarships = getScholarshipsForUniversity(program.universidad);
+                const becasRange = getBecasRangeText(scholarships);
+                
+                // 🔥 MÁS ESPACIO = MENOS TRUNCADO
+                const programName = (program.programa || program.nombre_programa || '').substring(0, 50);
+                const univName = (program.universidad || '').substring(0, 40);
+                const duration = formatDuration(program);
+                const tuition = `$${formatCurrency(program.precio_max_anual)}`;
+                
+                doc.text(programName, colPositions[0], yPosition + 4);
+                doc.text(univName, colPositions[1], yPosition + 4);
+                doc.text(duration, colPositions[2], yPosition + 4);
+                doc.text(tuition, colPositions[3], yPosition + 4);
+                doc.text(becasRange, colPositions[4], yPosition + 4);
+                
+                yPosition += 12;
+            });
+            
+            // =============================================================================
+            // FOOTER CALL-TO-ACTION
+            // =============================================================================
+            
+            // Verificar espacio para footer
+            if (yPosition > 160) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            yPosition += 15;
+            
+            // Rectángulo del footer
+            doc.setFillColor(102, 126, 234);
+            doc.rect(15, yPosition, 265, 20, 'F');
+            
+            // Texto del footer
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text('🌟 ¿Listo para aplicar a estos programas?', 20, yPosition + 8);
+            
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.text('Visita ScholarsSearch.com para acceder a los enlaces oficiales y descubrir MÁS BECAS', 20, yPosition + 15);
+            
+            // Descargar PDF
+            doc.save(`Programas-Favoritos-${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            // Track de actividad
+            trackActivity('pdf_export_programs', { 
+                programs_count: favorites.length,
+                export_type: 'favorite_programs'
+            });
+            
+            console.log(`✅ PDF HORIZONTAL exportado: ${favorites.length} programas favoritos`);
         }
 
         function exportFavoriteScholarships() {
-            if (favoriteScholarships.length === 0) { alert('No hay becas favoritas'); return; }
+            if (favoriteScholarships.length === 0) { 
+                alert('No hay becas favoritas para exportar'); 
+                return; 
+            }
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.setFontSize(20);
-            doc.text('Becas Favoritas - ScholarsSearch', 20, 20);
-            doc.setFontSize(10);
-            doc.text(`Generado: ${new Date().toLocaleDateString()}`, 20, 30);
-
-            let y = 45;
+            // 🔥 TAMBIÉN HORIZONTAL PARA CONSISTENCIA
+            const doc = new jsPDF('landscape', 'mm', 'a4');
+            
+            // Header corporativo (mismo que programas)
+            doc.setFillColor(102, 126, 234);
+            doc.rect(0, 0, 297, 30, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(16);
+            doc.setFont("helvetica", "bold");
+            doc.text('INTERNATIONAL LEARNING', 15, 12);
+            
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.text('📧 contacto@internationallearning.ec  |  📱 +593-XX-XXX-XXXX  |  🌐 www.internationallearning.ec', 15, 20);
+            doc.text(`Generado: ${new Date().toLocaleDateString('es-ES')}`, 230, 25);
+            
+            // Título
+            doc.setTextColor(0, 0, 0);
+            doc.setFontSize(14);
+            doc.setFont("helvetica", "bold");
+            doc.text('TUS BECAS FAVORITAS - RESUMEN DETALLADO', 15, 45);
+            
+            doc.setDrawColor(102, 126, 234);
+            doc.setLineWidth(0.5);
+            doc.line(15, 50, 280, 50);
+            
+            // Contenido de becas (formato lista con más espacio)
             const favorites = allScholarships.filter(s => favoriteScholarships.includes(s.id));
-            favorites.forEach((scholarship, i) => {
-                if (y > 250) { doc.addPage(); y = 20; }
-                doc.setFontSize(14);
-                doc.text(`${i + 1}. ${scholarship.Nombre_Beca}`, 20, y); y += 7;
-                doc.setFontSize(10);
-                doc.text(`Universidad: ${scholarship.Universidad}`, 25, y); y += 5;
-                doc.text(`Descuento: ${getDiscountText(scholarship)}`, 25, y); y += 10;
+            let yPosition = 65;
+            
+            favorites.forEach((scholarship, index) => {
+                if (yPosition > 170) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                // Alternar color de fondo
+                if (index % 2 === 0) {
+                    doc.setFillColor(250, 250, 250);
+                    doc.rect(15, yPosition - 3, 265, 18, 'F');
+                }
+                
+                // Nombre de la beca
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.setTextColor(102, 126, 234);
+                doc.text(`${index + 1}. ${scholarship.Nombre_Beca}`, 20, yPosition + 4);
+                
+                // Detalles en dos columnas
+                doc.setFontSize(8);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(0, 0, 0);
+                
+                // Columna izquierda
+                doc.text(`Universidad: ${scholarship.Universidad}`, 25, yPosition + 10);
+                doc.text(`País: ${scholarship.Pais}`, 25, yPosition + 15);
+                
+                // Columna derecha
+                doc.text(`Tipo: ${scholarship.Tipo_de_beca}`, 150, yPosition + 10);
+                doc.text(`Descuento: ${getDiscountText(scholarship)}`, 150, yPosition + 15);
+                
+                yPosition += 22;
             });
-            doc.save('becas-favoritas.pdf');
+            
+            // Footer (mismo que programas)
+            if (yPosition > 150) {
+                doc.addPage();
+                yPosition = 20;
+            }
+            
+            yPosition += 15;
+            doc.setFillColor(102, 126, 234);
+            doc.rect(15, yPosition, 265, 20, 'F');
+            
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "bold");
+            doc.text('🌟 ¿Listo para aplicar a estas becas?', 20, yPosition + 8);
+            
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "normal");
+            doc.text('Visita ScholarsSearch.com para acceder a los enlaces oficiales y descubrir MÁS BECAS', 20, yPosition + 15);
+            
+            doc.save(`Becas-Favoritas-${new Date().toISOString().split('T')[0]}.pdf`);
+            
+            trackActivity('pdf_export_scholarships', { 
+                scholarships_count: favorites.length,
+                export_type: 'favorite_scholarships'
+            });
+            
+            console.log(`✅ PDF HORIZONTAL exportado: ${favorites.length} becas favoritas`);
         }
+
+        // =============================================================================
+        // NUEVA FUNCIÓN AUXILIAR: OBTENER RANGO DE BECAS
+        // =============================================================================
+        
+        function getBecasRangeText(scholarships) {
+            if (scholarships.length === 0) return 'No disponible';
+            
+            let percentages = [];
+            let amounts = [];
+            
+            scholarships.forEach(s => {
+                const pct = parseFloat(s.Porcentaje_hasta) || parseFloat(s.Porcentaje_desde);
+                const amt = parseFloat(s.Monto_hasta) || parseFloat(s.Monto_desde);
+                
+                if (pct && pct > 0) {
+                    const displayPct = pct > 1 ? pct : pct * 100;
+                    percentages.push(displayPct);
+                }
+                if (amt && amt > 0) {
+                    amounts.push(amt);
+                }
+            });
+            
+            let result = [];
+            
+            if (percentages.length > 0) {
+                const minPct = Math.min(...percentages);
+                const maxPct = Math.max(...percentages);
+                if (minPct === maxPct) {
+                    result.push(`${minPct}%`);
+                } else {
+                    result.push(`${minPct}% - ${maxPct}%`);
+                }
+            }
+            
+            if (amounts.length > 0) {
+                const minAmt = Math.min(...amounts);
+                const maxAmt = Math.max(...amounts);
+                if (minAmt === maxAmt) {
+                    result.push(`$${formatCurrency(minAmt)}`);
+                } else {
+                    result.push(`$${formatCurrency(minAmt)} - $${formatCurrency(maxAmt)}`);
+                }
+            }
+            
+            return result.length > 0 ? result.join(' | ') : 'Variable';
+        }
+        
 
          // =============================================================================
         // PANEL HORIZONTAL SUPERIOR - INTEGRACIÓN
